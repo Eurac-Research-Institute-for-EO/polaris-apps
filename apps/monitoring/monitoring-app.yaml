@@ -1,0 +1,149 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: monitoring
+    namespace: argocd
+    finalizers:
+        - resources-finalizer.argocd.argoproj.io
+spec:
+    project: polaris
+    source:
+        chart: kube-prometheus-stack
+        repoURL: https://prometheus-community.github.io/helm-charts
+        targetRevision: 83.5.0
+        helm:
+            releaseName: monitoring
+            values: |
+                # -- Grafana ---------------------------------------------------------
+                # releaseName=monitoring -> service name = monitoring-grafana
+                # (matches ingress-grafana.yaml backend with no changes needed)
+                grafana:
+                  enabled: true
+
+                  # Admin credentials are sourced from the grafana-credentials secret
+                  # created by ansible/tasks/cluster_secrets.yaml - never commit plaintext here
+                  admin:
+                    existingSecret: grafana-credentials
+                    userKey: admin-user
+                    passwordKey: admin-password
+
+                  # Mounts grafana-credentials as env vars on the Grafana pod so that
+                  # grafana.ini can reference secrets via $__env{} interpolation
+                  envFromSecrets:
+                    - name: grafana-credentials
+
+                  grafana.ini:
+                    server:
+                      root_url: "http://grafana.10.8.244.253.nip.io"
+                      domain: "grafana.10.8.244.253.nip.io"
+
+                    # -- Keycloak OIDC --
+                    auth.generic_oauth:
+                      enabled: true
+                      name: Keycloak
+                      allow_sign_up: true
+                      auto_login: false
+                      client_id: polaris_grafana
+                      client_secret: $__env{GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}
+                      scopes: openid email profile groups
+                      auth_url: https://edp-portal.eurac.edu/auth/realms/edp/protocol/openid-connect/auth
+                      token_url: https://edp-portal.eurac.edu/auth/realms/edp/protocol/openid-connect/token
+                      api_url: https://edp-portal.eurac.edu/auth/realms/edp/protocol/openid-connect/userinfo
+                      # Keycloak sends groups with a leading slash e.g. '/polaris_admins'.
+                      # Ensure the Keycloak client has a 'Group Membership' mapper configured.
+                      role_attribute_path: "contains(groups[*], 'polaris_admins') && 'Admin' || 'Viewer'"
+                      use_pkce: true
+
+                  # Ingress is handled by ingress-grafana.yaml to match polaris conventions
+                  ingress:
+                    enabled: false
+
+                  # Fully disable the sidecar's dynamic datasource discovery.
+                  # In kube-prometheus-stack 83.x the sidecar injects an additional
+                  # Prometheus ConfigMap that also declares isDefault: true, which
+                  # conflicts with our own declaration and crashes Grafana on startup.
+                  # Disabling the sidecar + using the static `datasources` key below
+                  # gives us full deterministic control with no risk of duplicate defaults.
+                  sidecar:
+                    datasources:
+                      enabled: false
+                      defaultDatasourceEnabled: false
+
+                  # Statically provisioned datasources: mounted as a volume directly
+                  # into the Grafana pod — no sidecar required, no ConfigMap label
+                  # conflicts possible. Exactly ONE entry may have isDefault: true.
+                  #
+                  # prometheus-operated is the stable headless service name always
+                  # created by the Prometheus Operator, regardless of release name.
+                  datasources:
+                    datasources.yaml:
+                      apiVersion: 1
+                      datasources:
+                        - name: Prometheus
+                          type: prometheus
+                          url: http://prometheus-operated:9090
+                          isDefault: true
+                          editable: true
+                        - name: Loki
+                          type: loki
+                          url: http://loki:3100
+                          access: proxy
+                          isDefault: false
+                          editable: true
+
+                  persistence:
+                    enabled: true
+                    size: 5Gi
+
+                # -- Prometheus ------------------------------------------------------
+                prometheus:
+                  enabled: true
+                  prometheusSpec:
+                    retention: 30d
+                    storageSpec:
+                      volumeClaimTemplate:
+                        spec:
+                          accessModes: ["ReadWriteOnce"]
+                          resources:
+                            requests:
+                              storage: 20Gi
+
+                # -- Alertmanager ----------------------------------------------------
+                alertmanager:
+                  enabled: true
+                  alertmanagerSpec:
+                    storage:
+                      volumeClaimTemplate:
+                        spec:
+                          accessModes: ["ReadWriteOnce"]
+                          resources:
+                            requests:
+                              storage: 2Gi
+
+                # -- Node Exporter (per-node hardware/OS metrics) --------------------
+                nodeExporter:
+                  enabled: true
+
+                # -- kube-state-metrics (Kubernetes object state metrics) ------------
+                kubeStateMetrics:
+                  enabled: true
+
+                # -- Prometheus Operator ---------------------------------------------
+                prometheusOperator:
+                  enabled: true
+
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: monitoring
+
+    syncPolicy:
+        automated:
+            prune: true
+            selfHeal: true
+            allowEmpty: false
+        syncOptions:
+            - Validate=true
+            - CreateNamespace=true
+            - ServerSideApply=true
+            - PrunePropagationPolicy=foreground
+            - PruneLast=true

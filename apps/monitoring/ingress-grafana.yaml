@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: grafana
+    namespace: monitoring
+    labels:
+        app: grafana
+    annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+    ingressClassName: traefik
+    rules:
+        - host: grafana.10.8.244.253.nip.io
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: monitoring-grafana
+                            port:
+                                number: 80

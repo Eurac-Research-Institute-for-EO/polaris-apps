@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: hello-nginx
+    namespace: argocd
+    finalizers:
+        - resources-finalizer.argocd.argoproj.io
+spec:
+    project: polaris
+    source:
+        repoURL: https://github.com/Eurac-Research-Institute-for-EO/polaris-apps
+        targetRevision: main
+        path: apps/hello-nginx
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: hello-nginx
+    syncPolicy:
+        automated:
+            prune: true
+            selfHeal: true
+        syncOptions:
+            - CreateNamespace=true

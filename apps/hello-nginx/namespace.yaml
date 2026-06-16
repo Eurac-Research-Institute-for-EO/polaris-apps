@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hello-nginx
+  labels:
+    name: hello-nginx
+    managed-by: argocd

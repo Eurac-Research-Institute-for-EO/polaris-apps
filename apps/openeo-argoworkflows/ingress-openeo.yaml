@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: openeo-argoworkflows
+    namespace: openeo
+    labels:
+        app: openeo-argoworkflows
+    annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+    ingressClassName: traefik
+    rules:
+        - host: openeo.10.8.244.214.nip.io
+          http:
+              paths:
+                  - path: /openeo
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: openeo-openeo-argo
+                            port:
+                                number: 8000

@@ -1,0 +1,150 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: alloy
+    namespace: argocd
+    finalizers:
+        - resources-finalizer.argocd.argoproj.io
+spec:
+    project: polaris
+    source:
+        chart: alloy
+        repoURL: https://grafana.github.io/helm-charts
+        # Grafana Alloy replaces deprecated promtail.
+        # Chart 1.7.0 ships appVersion v1.15.0.
+        # https://github.com/grafana/alloy/tree/main/operations/helm/charts/alloy
+        targetRevision: 1.7.0
+        helm:
+            releaseName: alloy
+            values: |
+                alloy:
+                  # Opt out of anonymous usage reporting to Grafana Labs
+                  enableReporting: false
+
+                  # Pass node name as HOSTNAME so the per-node pod selector works
+                  extraEnv:
+                    - name: HOSTNAME
+                      valueFrom:
+                        fieldRef:
+                          fieldPath: spec.nodeName
+
+                  configMap:
+                    content: |
+                      logging {
+                        level  = "info"
+                        format = "logfmt"
+                      }
+
+                      // -- Loki destination --------------------------------------------------
+                      loki.write "default" {
+                        endpoint {
+                          url = "http://loki:3100/loki/api/v1/push"
+                        }
+                      }
+
+                      // -- Pod discovery: only pods scheduled on this node ------------------
+                      discovery.kubernetes "pod" {
+                        role = "pod"
+                        selectors {
+                          role  = "pod"
+                          field = "spec.nodeName=" + coalesce(sys.env("HOSTNAME"), constants.hostname)
+                        }
+                      }
+
+                      // -- Relabelling: promote meta labels to Loki stream labels -----------
+                      discovery.relabel "pod_logs" {
+                        targets = discovery.kubernetes.pod.targets
+
+                        rule {
+                          source_labels = ["__meta_kubernetes_namespace"]
+                          action        = "replace"
+                          target_label  = "namespace"
+                        }
+
+                        rule {
+                          source_labels = ["__meta_kubernetes_pod_name"]
+                          action        = "replace"
+                          target_label  = "pod"
+                        }
+
+                        rule {
+                          source_labels = ["__meta_kubernetes_pod_container_name"]
+                          action        = "replace"
+                          target_label  = "container"
+                        }
+
+                        rule {
+                          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+                          action        = "replace"
+                          target_label  = "app"
+                        }
+
+                        rule {
+                          source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_container_name"]
+                          action        = "replace"
+                          target_label  = "job"
+                          separator     = "/"
+                          replacement   = "$1"
+                        }
+
+                        rule {
+                          source_labels = ["__meta_kubernetes_pod_container_id"]
+                          action        = "replace"
+                          target_label  = "container_runtime"
+                          regex         = `^(\S+):\/\/.+$`
+                          replacement   = "$1"
+                        }
+                      }
+
+                      // -- Collect logs via the Kubernetes API (no hostPath needed) ---------
+                      loki.source.kubernetes "pod_logs" {
+                        targets    = discovery.relabel.pod_logs.output
+                        forward_to = [loki.process.pod_logs.receiver]
+                      }
+
+                      // -- Add a static cluster label before forwarding to Loki -------------
+                      loki.process "pod_logs" {
+                        stage.static_labels {
+                          values = {
+                            cluster = "polaris",
+                          }
+                        }
+                        forward_to = [loki.write.default.receiver]
+                      }
+
+                # -- Controller: run one Alloy pod per node ---------------------------
+                controller:
+                  type: daemonset
+                  tolerations:
+                    - key: node-role.kubernetes.io/master
+                      operator: Exists
+                      effect: NoSchedule
+                    - key: node-role.kubernetes.io/control-plane
+                      operator: Exists
+                      effect: NoSchedule
+
+                # -- ServiceMonitor: let kube-prometheus-stack scrape Alloy metrics ---
+                serviceMonitor:
+                  enabled: true
+                  additionalLabels:
+                    # Must match the release label used by our kube-prometheus-stack instance
+                    release: monitoring
+
+                # -- RBAC: chart creates ClusterRole covering pods/log + namespaces ---
+                rbac:
+                  create: true
+
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: monitoring
+
+    syncPolicy:
+        automated:
+            prune: true
+            selfHeal: true
+            allowEmpty: false
+        syncOptions:
+            - Validate=true
+            - CreateNamespace=true
+            - PrunePropagationPolicy=foreground
+            - PruneLast=true

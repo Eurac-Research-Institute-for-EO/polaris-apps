@@ -1,0 +1,98 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: openeo-argoworkflows
+    namespace: argocd
+spec:
+    project: polaris
+    source:
+        repoURL: https://github.com/Eurac-Research-Institute-for-EO/charts
+        targetRevision: main
+        path: eodc/openeo-argo
+        helm:
+            releaseName: openeo
+            valuesObject:
+                global:
+                    env:
+                        alembicDir: "/opt/openeo_argoworkflows_api/psql"
+                        apiDns: openeo.10.8.244.253.nip.io
+                        apiTLS: false
+                        apiUrl: "http://openeo.10.8.244.253.nip.io/openeo/1.1.0"
+                        apiTitle: "OpenEO ArgoWorkflows"
+                        apiDescription: "A K8S deployment of the openeo api for argoworkflows."
+                        oidcUrl: "https://edp-portal.eurac.edu/auth/realms/edp"
+                        oidcOrganisation: "eurac-keycloak"
+                        oidcProviderTitle: "EURAC Keycloak"
+                        oidcPolicies: ""
+                        stacCatalogueUrl: "https://stac.eurac.edu/"
+                        workspaceRoot: "/user_workspaces"
+                        executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:d6771b1"
+                        daskWorkerCores: "4"
+                        daskWorkerMemory: "8"
+                        daskWorkerLimit: "6"
+                        daskClusterTimeout: "3600"
+
+                replicaCount: 1
+
+                image:
+                    repository: ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-api
+                    pullPolicy: Always
+                    tag: "latest"
+
+                postgresql:
+                    enabled: true
+                    image:
+                        repository: bitnamilegacy/postgresql
+                    auth:
+                        username: "postgres"
+                        password: "openeo123"
+                        database: "postgres"
+                    persistence:
+                        size: "8Gi"
+
+                redis:
+                    image:
+                        repository: bitnamilegacy/redis
+                    persistence:
+                        size: "8Gi"
+                    replicas:
+                        enabled: true
+                        count: 1
+
+                service:
+                    type: ClusterIP
+                    port: 8000
+
+                ingress:
+                    enabled: false
+
+                resources:
+                    limits:
+                        cpu: 500m
+                        memory: 512Mi
+                    requests:
+                        cpu: 250m
+                        memory: 256Mi
+
+                autoscaling:
+                    enabled: false
+
+                nodeSelector: {}
+                tolerations: []
+                affinity: {}
+
+    destination:
+        name: in-cluster
+        namespace: openeo
+
+    syncPolicy:
+        automated:
+            prune: true
+            selfHeal: true
+            allowEmpty: false
+        syncOptions:
+            - Validate=true
+            - CreateNamespace=true
+            - PrunePropagationPolicy=foreground
+            - PruneLast=true
+            - RespectIgnoreDifferences=true
