@@ -1,0 +1,47 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Dev openeo: node 10.8.244.185, namespace "openeo-dev".
+# Public via the ICT reverse proxy at dev.openeo.eurac.edu (proxy terminates
+# TLS; in-cluster ingress stays plain HTTP). Assumes the proxy preserves the
+# Host header and forwards to .185's Traefik web entrypoint — confirm with ICT.
+resources:
+    - ../../base
+
+patches:
+    - target:
+          kind: Application
+          name: openeo-argoworkflows
+      patch: |-
+          - op: replace
+            path: /metadata/name
+            value: openeo-argoworkflows-dev
+          - op: replace
+            path: /spec/destination/namespace
+            value: openeo-dev
+          - op: replace
+            path: /spec/source/helm/valuesObject/global/env/apiDns
+            value: dev.openeo.eurac.edu
+          - op: replace
+            path: /spec/source/helm/valuesObject/global/env/apiTLS
+            value: true
+          - op: replace
+            path: /spec/source/helm/valuesObject/global/env/apiUrl
+            value: https://dev.openeo.eurac.edu/openeo/1.1.0
+          # Pin the workload to the internal/dev node.
+          # Requires: kubectl label node <dev-node> polaris.eurac.edu/env=dev
+          - op: replace
+            path: /spec/source/helm/valuesObject/nodeSelector
+            value:
+                polaris.eurac.edu/env: dev
+
+    - target:
+          kind: Ingress
+          name: openeo-argoworkflows
+      patch: |-
+          - op: replace
+            path: /metadata/namespace
+            value: openeo-dev
+          - op: replace
+            path: /spec/rules/0/host
+            value: dev.openeo.eurac.edu

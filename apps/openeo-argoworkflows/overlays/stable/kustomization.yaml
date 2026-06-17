@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Stable openeo: public node, namespace "openeo", host on the public node IP.
+# Keeps the Application name "openeo" so the existing deployment is updated
+# in place (only nodeSelector is added vs. what is already running).
+resources:
+    - ../../base
+
+patches:
+    # Pin the workload to the public/stable node.
+    # Requires: kubectl label node <stable-node> polaris.eurac.edu/env=stable
+    - target:
+          kind: Application
+          name: openeo-argoworkflows
+      patch: |-
+          - op: replace
+            path: /spec/source/helm/valuesObject/nodeSelector
+            value:
+                polaris.eurac.edu/env: stable

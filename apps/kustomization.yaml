@@ -3,6 +3,6 @@ kind: Kustomization
 
 resources:
     - hello-nginx/hello-nginx-app.yaml
-    - openeo-argoworkflows/
+    - openeo-argoworkflows/overlays/stable
+    - openeo-argoworkflows/overlays/dev
     - monitoring/
-    # - keycloak/keycloak-app.yaml

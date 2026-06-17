@@ -15,9 +15,9 @@ spec:
                 global:
                     env:
                         alembicDir: "/opt/openeo_argoworkflows_api/psql"
-                        apiDns: openeo.10.8.244.253.nip.io
-                        apiTLS: false
-                        apiUrl: "http://openeo.10.8.244.253.nip.io/openeo/1.1.0"
+                        apiDns: openeo.eurac.edu
+                        apiTLS: true
+                        apiUrl: "https://openeo.eurac.edu/openeo/1.1.0"
                         apiTitle: "OpenEO ArgoWorkflows"
                         apiDescription: "A K8S deployment of the openeo api for argoworkflows."
                         oidcUrl: "https://edp-portal.eurac.edu/auth/realms/edp"
