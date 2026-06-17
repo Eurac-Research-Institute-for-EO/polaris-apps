@@ -20,6 +20,11 @@ patches:
           - op: replace
             path: /spec/destination/namespace
             value: openeo-dev
+          # Distinct release name so chart-generated names (incl. cluster-scoped
+          # ClusterRoles like *-dask-gateway) don't collide with stable.
+          - op: replace
+            path: /spec/source/helm/releaseName
+            value: openeo-dev
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/apiDns
             value: dev.openeo.eurac.edu
@@ -35,6 +40,14 @@ patches:
             path: /spec/source/helm/valuesObject/nodeSelector
             value:
                 polaris.eurac.edu/env: dev
+          # Image pins (per-env so stable/dev can diverge later).
+          # Bump these to test a different build on dev without touching stable.
+          - op: replace
+            path: /spec/source/helm/valuesObject/image/tag
+            value: "latest"
+          - op: replace
+            path: /spec/source/helm/valuesObject/global/env/executorImage
+            value: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:latest"
 
     - target:
           kind: Ingress
@@ -46,3 +59,7 @@ patches:
           - op: replace
             path: /spec/rules/0/host
             value: dev.openeo.eurac.edu
+          # Service name follows the dev releaseName (openeo-dev-openeo-argo).
+          - op: replace
+            path: /spec/rules/0/http/paths/0/backend/service/name
+            value: openeo-dev-openeo-argo

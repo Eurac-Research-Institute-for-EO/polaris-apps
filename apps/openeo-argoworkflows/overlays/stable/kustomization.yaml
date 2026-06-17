@@ -19,3 +19,10 @@ patches:
             path: /spec/source/helm/valuesObject/nodeSelector
             value:
                 polaris.eurac.edu/env: stable
+          # Image pins (per-env so stable/dev can diverge later).
+          - op: replace
+            path: /spec/source/helm/valuesObject/image/tag
+            value: "latest"
+          - op: replace
+            path: /spec/source/helm/valuesObject/global/env/executorImage
+            value: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:latest"

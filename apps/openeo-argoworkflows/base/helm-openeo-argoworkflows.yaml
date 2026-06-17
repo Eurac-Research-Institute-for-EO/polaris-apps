@@ -26,7 +26,7 @@ spec:
                         oidcPolicies: ""
                         stacCatalogueUrl: "https://stac.eurac.edu/"
                         workspaceRoot: "/user_workspaces"
-                        executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:d6771b1"
+                        executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:latest"
                         daskWorkerCores: "4"
                         daskWorkerMemory: "8"
                         daskWorkerLimit: "6"
