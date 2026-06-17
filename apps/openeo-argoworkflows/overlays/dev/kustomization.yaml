@@ -6,6 +6,7 @@ kind: Kustomization
 # TLS; in-cluster ingress stays plain HTTP). Assumes the proxy preserves the
 # Host header and forwards to .185's Traefik web entrypoint — confirm with ICT.
 resources:
+    - namespace.yaml
     - ../../base
 
 patches:

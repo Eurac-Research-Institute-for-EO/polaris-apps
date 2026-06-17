@@ -5,6 +5,7 @@ kind: Kustomization
 # Keeps the Application name "openeo" so the existing deployment is updated
 # in place (only nodeSelector is added vs. what is already running).
 resources:
+    - namespace.yaml
     - ../../base
 
 patches:
