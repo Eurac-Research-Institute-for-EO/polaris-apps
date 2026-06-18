@@ -10,10 +10,22 @@ metadata:
 spec:
     ingressClassName: traefik
     rules:
-        - host: 10.8.244.185 # change to dev.openeo.eurac.org
-          http:
+        # Host-less rule: matches any Host header, so the API is reachable
+        # directly by node IP (http://<node-ip>/openeo/...). Per-environment
+        # public hostnames are added in the overlays (stable adds openeo.eurac.edu).
+        - http:
               paths:
+                  # Versioned API (e.g. /openeo/1.1.0/...).
                   - path: /openeo
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: openeo-openeo-argo
+                            port:
+                                number: 8000
+                  # openEO discovery document, served at the domain root by the
+                  # API — required for openEO clients to bootstrap from the host.
+                  - path: /.well-known/openeo
                     pathType: Prefix
                     backend:
                         service:

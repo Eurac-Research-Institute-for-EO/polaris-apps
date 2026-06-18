@@ -26,3 +26,13 @@ patches:
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/executorImage
             value: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:latest"
+
+    # Give stable a real public hostname so it doesn't collide with dev's
+    # host-less rule on the shared Traefik (host rules win over host-less ones).
+    - target:
+          kind: Ingress
+          name: openeo-argoworkflows
+      patch: |-
+          - op: add
+            path: /spec/rules/0/host
+            value: openeo.eurac.edu

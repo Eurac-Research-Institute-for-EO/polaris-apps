@@ -28,9 +28,12 @@ patches:
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/apiDns
             value: 10.8.244.185 # Replace with dev.openeo.eurac.edu
+          # false for plain-HTTP IP access: the API advertises its links as
+          # {scheme}://{apiDns}/openeo/1.1.0/, so http here -> http links that
+          # work on :80. Set back to true when serving via the HTTPS proxy.
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/apiTLS
-            value: true
+            value: false
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/apiUrl
             value: http://10.8.244.185/openeo/1.1.0
@@ -56,10 +59,13 @@ patches:
           - op: replace
             path: /metadata/namespace
             value: openeo-dev
-          - op: replace
-            path: /spec/rules/0/host
-            value: 10.8.244.185
+          # No host patch: the base rule is host-less, so dev is reachable by
+          # node IP (http://10.8.244.185/openeo/...) without DNS or a proxy.
           # Service name follows the dev releaseName (openeo-dev-openeo-argo).
+          # Patch every path's backend (paths[0]=/openeo, paths[1]=/.well-known/openeo).
           - op: replace
             path: /spec/rules/0/http/paths/0/backend/service/name
+            value: openeo-dev-openeo-argo
+          - op: replace
+            path: /spec/rules/0/http/paths/1/backend/service/name
             value: openeo-dev-openeo-argo
