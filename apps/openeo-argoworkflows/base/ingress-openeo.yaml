@@ -10,7 +10,7 @@ metadata:
 spec:
     ingressClassName: traefik
     rules:
-        - host: openeo.eurac.edu
+        - host: 10.8.244.185 # change to dev.openeo.eurac.org
           http:
               paths:
                   - path: /openeo

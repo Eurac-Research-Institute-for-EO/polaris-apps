@@ -27,13 +27,13 @@ patches:
             value: openeo-dev
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/apiDns
-            value: dev.openeo.eurac.edu
+            value: 10.8.244.185 # Replace with dev.openeo.eurac.edu
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/apiTLS
             value: true
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/apiUrl
-            value: https://dev.openeo.eurac.edu/openeo/1.1.0
+            value: http://10.8.244.185/openeo/1.1.0
           # Pin the workload to the internal/dev node.
           # Requires: kubectl label node <dev-node> polaris.eurac.edu/env=dev
           - op: replace
@@ -58,7 +58,7 @@ patches:
             value: openeo-dev
           - op: replace
             path: /spec/rules/0/host
-            value: dev.openeo.eurac.edu
+            value: 10.8.244.185
           # Service name follows the dev releaseName (openeo-dev-openeo-argo).
           - op: replace
             path: /spec/rules/0/http/paths/0/backend/service/name
