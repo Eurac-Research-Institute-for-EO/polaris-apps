@@ -7,7 +7,7 @@ spec:
     project: polaris
     source:
         repoURL: https://github.com/Eurac-Research-Institute-for-EO/charts
-        targetRevision: main
+        targetRevision: openeo-fix
         path: eodc/openeo-argo
         helm:
             releaseName: openeo
