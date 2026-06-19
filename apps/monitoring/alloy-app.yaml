@@ -21,6 +21,15 @@ spec:
                   # Opt out of anonymous usage reporting to Grafana Labs
                   enableReporting: false
 
+                  # Bound the per-node agent's footprint (runs on every node,
+                  # including control-plane via the tolerations below).
+                  resources:
+                    requests:
+                      cpu: 50m
+                      memory: 128Mi
+                    limits:
+                      memory: 256Mi
+
                   # Pass node name as HOSTNAME so the per-node pod selector works
                   extraEnv:
                     - name: HOSTNAME
@@ -39,6 +48,12 @@ spec:
                       loki.write "default" {
                         endpoint {
                           url = "http://loki:3100/loki/api/v1/push"
+                        }
+                        // Write-ahead log: buffer to disk and replay when Loki
+                        // comes back, so a Loki restart/outage doesn't drop logs.
+                        wal {
+                          enabled         = true
+                          max_segment_age = "1h"
                         }
                       }
 

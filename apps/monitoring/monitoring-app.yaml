@@ -100,6 +100,17 @@ spec:
                   enabled: true
                   prometheusSpec:
                     retention: 30d
+                    # Size guard: whichever of retention / retentionSize is reached
+                    # first wins, so a metrics spike can't fill the PVC before 30d.
+                    retentionSize: "18GB"   # ~90% of the 20Gi PVC below
+                    # Compress the WAL: less disk use and faster replay on restart.
+                    walCompression: true
+                    resources:
+                      requests:
+                        cpu: 250m
+                        memory: 1Gi
+                      limits:
+                        memory: 2Gi
                     storageSpec:
                       volumeClaimTemplate:
                         spec:
