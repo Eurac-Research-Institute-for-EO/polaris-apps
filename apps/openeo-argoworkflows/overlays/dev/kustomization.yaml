@@ -62,13 +62,13 @@ patches:
           # job and API-pod resources/scaling.
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/daskWorkerCores
-            value: "16"
+            value: "4"
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/daskWorkerMemory
-            value: "24"
+            value: "32"
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/daskWorkerLimit
-            value: "8"
+            value: "4"
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/daskClusterTimeout
             value: "3600"
