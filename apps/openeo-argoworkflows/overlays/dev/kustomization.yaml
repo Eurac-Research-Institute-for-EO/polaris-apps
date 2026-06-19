@@ -25,6 +25,13 @@ patches:
           - op: replace
             path: /spec/source/helm/releaseName
             value: openeo-dev
+          # Postgres secret follows the dev releaseName: the chart reads
+          # <release>-postgresql, so point existingSecret at openeo-dev-postgresql
+          # (created by ansible in the openeo-dev namespace). Base default is the
+          # stable name (openeo-postgresql).
+          - op: replace
+            path: /spec/source/helm/valuesObject/postgresql/auth/existingSecret
+            value: openeo-dev-postgresql
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/apiDns
             value: 10.8.244.185 # Replace with dev.openeo.eurac.edu
