@@ -26,6 +26,37 @@ patches:
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/executorImage
             value: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:latest"
+          # Sizing (per-env so stable/dev can diverge). Dask cluster sizing per
+          # job and API-pod resources/scaling.
+          - op: replace
+            path: /spec/source/helm/valuesObject/global/env/daskWorkerCores
+            value: "4"
+          - op: replace
+            path: /spec/source/helm/valuesObject/global/env/daskWorkerMemory
+            value: "8"
+          - op: replace
+            path: /spec/source/helm/valuesObject/global/env/daskWorkerLimit
+            value: "6"
+          - op: replace
+            path: /spec/source/helm/valuesObject/global/env/daskClusterTimeout
+            value: "3600"
+          # replicaCount = number of API server pods (Deployment replicas).
+          - op: replace
+            path: /spec/source/helm/valuesObject/replicaCount
+            value: 1
+          - op: replace
+            path: /spec/source/helm/valuesObject/resources
+            value:
+                limits:
+                    cpu: 500m
+                    memory: 512Mi
+                requests:
+                    cpu: 250m
+                    memory: 256Mi
+          - op: replace
+            path: /spec/source/helm/valuesObject/autoscaling
+            value:
+                enabled: false
 
     # Give stable a real public hostname so it doesn't collide with dev's
     # host-less rule on the shared Traefik (host rules win over host-less ones).
