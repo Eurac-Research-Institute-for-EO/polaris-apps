@@ -22,10 +22,10 @@ patches:
           # Image pins (per-env so stable/dev can diverge later).
           - op: replace
             path: /spec/source/helm/valuesObject/image/tag
-            value: "latest"
+            value: "stable"
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/executorImage
-            value: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:latest"
+            value: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:stable"
           # Sizing (per-env so stable/dev can diverge). Dask cluster sizing per
           # job and API-pod resources/scaling.
           - op: replace
