@@ -54,10 +54,10 @@ patches:
           # Bump these to test a different build on dev without touching stable.
           - op: replace
             path: /spec/source/helm/valuesObject/image/tag
-            value: "latest"
+            value: "dev"
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/executorImage
-            value: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:latest"
+            value: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:dev"
           # Sizing (per-env so stable/dev can diverge). Dask cluster sizing per
           # job and API-pod resources/scaling.
           - op: replace

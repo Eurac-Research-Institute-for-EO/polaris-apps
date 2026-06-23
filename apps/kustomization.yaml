@@ -6,3 +6,4 @@ resources:
     #- openeo-argoworkflows/overlays/stable enable once ready
     - openeo-argoworkflows/overlays/dev
     - monitoring/
+    - dask-gateway/

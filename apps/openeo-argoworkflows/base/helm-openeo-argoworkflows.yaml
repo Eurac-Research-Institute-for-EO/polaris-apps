@@ -21,7 +21,7 @@ spec:
                         apiTitle: "OpenEO ArgoWorkflows"
                         apiDescription: "A K8S deployment of the openeo api for argoworkflows."
                         oidcUrl: "https://edp-portal.eurac.edu/auth/realms/edp"
-                        oidcOrganisation: "eurac-keycloak"
+                        oidcOrganisation: "eurac" # eurac-keycloak if it breaks
                         oidcProviderTitle: "EURAC Keycloak"
                         oidcPolicies: ""
                         stacCatalogueUrl: "https://stac.eurac.edu/"
