@@ -95,6 +95,14 @@ patches:
             path: /spec/source/helm/valuesObject/autoscaling
             value:
                 enabled: false
+          # Enable S3 output upload. Renders the S3_* env block (chart
+          # deployment.yaml), sourced from secret "openeo-s3-credentials"
+          # (keys: endpoint_url, bucket, access_key, secret_key) which must
+          # exist in the openeo-dev namespace (copied from prod, not committed).
+          - op: add
+            path: /spec/source/helm/valuesObject/s3
+            value:
+                enabled: true
 
     - target:
           kind: Ingress
