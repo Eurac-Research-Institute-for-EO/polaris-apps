@@ -44,6 +44,12 @@ patches:
           - op: replace
             path: /spec/source/helm/valuesObject/global/env/apiUrl
             value: http://10.8.244.185/openeo/1.1.0
+          - op: replace
+            path: /spec/source/helm/valuesObject/global/env/apiTitle
+            value: "OpenEO ArgoWorkflows (Dev)"
+          - op: replace
+            path: /spec/source/helm/valuesObject/global/env/apiDescription
+            value: "Development deployment of the openEO API for Argo Workflows at EURAC."
           # Pin the workload to the internal/dev node.
           # Requires: kubectl label node <dev-node> polaris.eurac.edu/env=dev
           - op: replace

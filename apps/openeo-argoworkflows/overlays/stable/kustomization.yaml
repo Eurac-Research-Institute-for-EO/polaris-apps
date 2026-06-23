@@ -35,6 +35,12 @@ patches:
             path: /spec/source/helm/valuesObject/global/env/daskWorkerMemory
             value: "8"
           - op: replace
+            path: /spec/source/helm/valuesObject/global/env/apiTitle
+            value: "OpenEO ArgoWorkflows (Stable)"
+          - op: replace
+            path: /spec/source/helm/valuesObject/global/env/apiDescription
+            value: "Stable deployment of the openEO API for Argo Workflows at EURAC."
+          - op: replace
             path: /spec/source/helm/valuesObject/global/env/daskWorkerLimit
             value: "6"
           - op: replace
