@@ -69,6 +69,15 @@ service:
 ingress:
   enabled: false
 
+# S3 object store for job result storage. Same config for dev and stable, so it
+# lives here in base. The chart reads the Secret named "openeo-s3-credentials"
+# (the default secretName) — keys endpoint_url, bucket, access_key, secret_key —
+# which ansible creates per namespace from secrets.openeo.s3 in vars/secrets.yaml.
+# That Secret MUST exist in the namespace before the pods start, or they stay in
+# CreateContainerConfigError until it does.
+s3:
+  enabled: true
+
 resources:
   limits:
     cpu: 500m
