@@ -3,7 +3,7 @@ kind: Kustomization
 
 resources:
     #- hello-nginx/hello-nginx-app.yaml
-    #- openeo-argoworkflows/overlays/stable
+    - openeo-argoworkflows/overlays/stable
     - openeo-argoworkflows/overlays/dev
     - monitoring/
     - dask-gateway/

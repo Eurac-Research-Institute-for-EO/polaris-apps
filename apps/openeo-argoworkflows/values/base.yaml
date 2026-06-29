@@ -8,66 +8,66 @@
 #
 # NOTE: `image:` is intentionally NOT here — see image-base.yaml.
 global:
-  env:
-    alembicDir: "/opt/openeo_argoworkflows_api/psql"
-    apiDns: openeo.eurac.edu
-    apiTLS: true
-    apiUrl: "https://openeo.eurac.edu/openeo/1.1.0"
-    apiTitle: "OpenEO ArgoWorkflows"
-    apiDescription: "A K8S deployment of the openeo api for argoworkflows."
-    oidcUrl: "https://edp-portal.eurac.edu/auth/realms/edp"
-    oidcOrganisation: "eurac" # eurac-keycloak if it breaks
-    oidcProviderTitle: "EURAC Keycloak"
-    oidcPolicies: ""
-    stacCatalogueUrl: "https://stac.eurac.edu/"
-    workspaceRoot: "/user_workspaces"
-    executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:latest"
-    daskWorkerCores: "4"
-    daskWorkerMemory: "8"
-    daskWorkerLimit: "6"
-    daskClusterTimeout: "3600"
+    env:
+        alembicDir: "/opt/openeo_argoworkflows_api/psql"
+        apiDns: openeo.eurac.edu
+        apiTLS: true
+        apiUrl: "https://openeo.eurac.edu/openeo/1.1.0"
+        apiTitle: "OpenEO ArgoWorkflows"
+        apiDescription: "A K8S deployment of the openeo api for argoworkflows."
+        oidcUrl: "https://edp-portal.eurac.edu/auth/realms/edp"
+        oidcOrganisation: "eurac" # eurac-keycloak if it breaks
+        oidcProviderTitle: "EURAC Keycloak"
+        oidcPolicies: ""
+        stacCatalogueUrl: "https://stac.eurac.edu/"
+        workspaceRoot: "/user_workspaces"
+        executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:latest"
+        daskWorkerCores: "4"
+        daskWorkerMemory: "8"
+        daskWorkerLimit: "6"
+        daskClusterTimeout: "3600"
 
 replicaCount: 1
 
 postgresql:
-  enabled: true
-  image:
-    repository: bitnamilegacy/postgresql
-  auth:
-    username: "postgres"
-    database: "postgres"
-    # Password is sourced from the per-release Secret created by ansible
-    # (multinode/tasks/master/secrets.yaml) BEFORE argocd syncs — never commit
-    # plaintext here. Default below is the stable release (release "openeo" ->
-    # openeo-postgresql); dev.yaml overrides it to openeo-dev-postgresql. The
-    # Bitnami subchart AND the openeo API/cronjobs read postgres-password here.
-    existingSecret: openeo-postgresql
-    secretKeys:
-      adminPasswordKey: postgres-password
-      userPasswordKey: postgres-password
-      replicationPasswordKey: postgres-password
-  persistence:
-    size: "8Gi"
+    enabled: true
+    image:
+        repository: bitnamilegacy/postgresql
+    auth:
+        username: "postgres"
+        database: "postgres"
+        # Password is sourced from the per-release Secret created by ansible
+        # (multinode/tasks/master/secrets.yaml) BEFORE argocd syncs — never commit
+        # plaintext here. Default below is the stable release (release "openeo" ->
+        # openeo-postgresql); dev.yaml overrides it to openeo-dev-postgresql. The
+        # Bitnami subchart AND the openeo API/cronjobs read postgres-password here.
+        existingSecret: openeo-postgresql
+        secretKeys:
+            adminPasswordKey: postgres-password
+            userPasswordKey: postgres-password
+            replicationPasswordKey: postgres-password
+    persistence:
+        size: "8Gi"
 
 redis:
-  image:
-    repository: bitnamilegacy/redis
-  # auth stays disabled: this chart never injects REDIS_PASSWORD into the
-  # API/worker/cronjob pods, so enabling Redis auth would break them.
-  auth:
-    enabled: false
-  persistence:
-    size: "8Gi"
-  replicas:
-    enabled: true
-    count: 1
+    image:
+        repository: bitnamilegacy/redis
+    # auth stays disabled: this chart never injects REDIS_PASSWORD into the
+    # API/worker/cronjob pods, so enabling Redis auth would break them.
+    auth:
+        enabled: false
+    persistence:
+        size: "8Gi"
+    replicas:
+        enabled: true
+        count: 1
 
 service:
-  type: ClusterIP
-  port: 8000
+    type: ClusterIP
+    port: 8000
 
 ingress:
-  enabled: false
+    enabled: false
 
 # S3 object store for job result storage. Same config for dev and stable, so it
 # lives here in base. The chart reads the Secret named "openeo-s3-credentials"
@@ -76,18 +76,18 @@ ingress:
 # That Secret MUST exist in the namespace before the pods start, or they stay in
 # CreateContainerConfigError until it does.
 s3:
-  enabled: true
+    enabled: true
 
 resources:
-  limits:
-    cpu: 500m
-    memory: 512Mi
-  requests:
-    cpu: 250m
-    memory: 256Mi
+    limits:
+        cpu: 500m
+        memory: 512Mi
+    requests:
+        cpu: 250m
+        memory: 256Mi
 
 autoscaling:
-  enabled: false
+    enabled: false
 
 nodeSelector: {}
 tolerations: []
