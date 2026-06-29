@@ -1,0 +1,13 @@
+# Stable-only Helm overrides, deep-merged over base.yaml. Most stable values
+# already match base (apiDns, apiTLS, dask sizing, resources), so only the
+# divergences are listed here. The image is in image-stable.yaml.
+global:
+  env:
+    apiTitle: "OpenEO ArgoWorkflows (Stable)"
+    apiDescription: "Stable deployment of the openEO API for Argo Workflows at EURAC."
+    executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:stable"
+
+# Pin the workload to the public/stable node.
+# Requires: kubectl label node <stable-node> polaris.eurac.edu/env=stable
+nodeSelector:
+  polaris.eurac.edu/env: stable

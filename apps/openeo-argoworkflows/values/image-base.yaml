@@ -1,0 +1,16 @@
+# openeo-argoworkflows API image — kept in a SEPARATE Helm values file (NOT in
+# the Application's inline valuesObject) so ArgoCD Image Updater can git-write-back
+# tag bumps here. The Application reads this file through a multi-source $values
+# ref: $values/apps/openeo-argoworkflows/values/image-base.yaml.
+#
+# IMPORTANT: the Application's valuesObject must NOT set `image:` — valuesObject
+# has higher Helm precedence than valueFiles and would override whatever Image
+# Updater writes here.
+#
+# This base file is the env-neutral default. Each overlay repoints valueFiles to
+# its own file (overlays/dev -> image-dev.yaml, overlays/stable -> image-stable.yaml),
+# so base itself is not deployed directly.
+image:
+  repository: ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-api
+  pullPolicy: Always
+  tag: "latest"

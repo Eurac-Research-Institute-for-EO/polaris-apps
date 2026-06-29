@@ -1,0 +1,15 @@
+# DEV openeo-argoworkflows API image. Image-Updater-owned: it git-writes the
+# image.tag below (to the polaris-apps `dev` branch) when a new image is pushed.
+#
+# The dev overlay uses the `digest` update-strategy on the mutable :dev tag, so
+# image.tag becomes `dev@sha256:<digest>` after the first update — the chart
+# renders `repository:dev@sha256:<digest>`, a valid digest-pinned reference. Each
+# new push to :dev produces a new digest -> a new commit here -> a re-sync.
+#
+# To revert a bad bump: `git revert` the `argocd-image-updater` commit that
+# touched this file, or edit image.tag back to a previous `dev@sha256:...` (or
+# plain `dev`) and push.
+image:
+  repository: ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-api
+  pullPolicy: Always
+  tag: "dev"

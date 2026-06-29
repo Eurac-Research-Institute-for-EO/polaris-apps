@@ -1,0 +1,29 @@
+# Dev-only Helm overrides, deep-merged over base.yaml (only the keys that differ
+# from base are listed). The image is in image-dev.yaml. Application-object
+# settings (name, namespace, releaseName, which valueFiles to load, ingress) are
+# NOT Helm values, so they stay as kustomize patches in overlays/dev.
+global:
+  env:
+    apiDns: "10.8.244.185" # Replace with dev.openeo.eurac.edu
+    # false for plain-HTTP IP access: the API advertises its links as
+    # {scheme}://{apiDns}/openeo/1.1.0/, so http here -> http links that work on
+    # :80. Set back to true when serving via the HTTPS proxy.
+    apiTLS: false
+    apiUrl: "http://10.8.244.185/openeo/1.1.0"
+    apiTitle: "OpenEO ArgoWorkflows (Dev)"
+    apiDescription: "Development deployment of the openEO API for Argo Workflows at EURAC."
+    executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:dev"
+    # Dask sizing diverges from base for dev.
+    daskWorkerMemory: "32"
+    daskWorkerLimit: "4"
+
+# Pin the workload to the internal/dev node.
+# Requires: kubectl label node <dev-node> polaris.eurac.edu/env=dev
+nodeSelector:
+  polaris.eurac.edu/env: dev
+
+# Dev release name is openeo-dev, so the chart reads openeo-dev-postgresql
+# (created by ansible in the openeo-dev namespace).
+postgresql:
+  auth:
+    existingSecret: openeo-dev-postgresql

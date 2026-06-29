@@ -2,67 +2,29 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 # Stable openeo: public node, namespace "openeo", host on the public node IP.
-# Keeps the Application name "openeo" so the existing deployment is updated
-# in place (only nodeSelector is added vs. what is already running).
+# Keeps the base Application name/namespace/releaseName (openeo), so only the
+# value files and the public hostname differ from base.
+#
+# Helm VALUES live in ../../values/*.yaml; these patches only set the valueFiles
+# to load and the Ingress host. Image Updater is NOT enabled for stable yet — to
+# turn it on, copy the dev overlay's annotations and point write-back-target at
+# values/image-stable.yaml.
 resources:
     - namespace.yaml
     - ../../base
 
 patches:
-    # Pin the workload to the public/stable node.
-    # Requires: kubectl label node <stable-node> polaris.eurac.edu/env=stable
     - target:
           kind: Application
           name: openeo-argoworkflows
       patch: |-
+          # Load the stable value files (over base). image-stable.yaml last.
           - op: replace
-            path: /spec/source/helm/valuesObject/nodeSelector
+            path: /spec/sources/0/helm/valueFiles
             value:
-                polaris.eurac.edu/env: stable
-          # Image pins (per-env so stable/dev can diverge later).
-          - op: replace
-            path: /spec/source/helm/valuesObject/image/tag
-            value: "stable"
-          - op: replace
-            path: /spec/source/helm/valuesObject/global/env/executorImage
-            value: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:stable"
-          # Sizing (per-env so stable/dev can diverge). Dask cluster sizing per
-          # job and API-pod resources/scaling.
-          - op: replace
-            path: /spec/source/helm/valuesObject/global/env/daskWorkerCores
-            value: "4"
-          - op: replace
-            path: /spec/source/helm/valuesObject/global/env/daskWorkerMemory
-            value: "8"
-          - op: replace
-            path: /spec/source/helm/valuesObject/global/env/apiTitle
-            value: "OpenEO ArgoWorkflows (Stable)"
-          - op: replace
-            path: /spec/source/helm/valuesObject/global/env/apiDescription
-            value: "Stable deployment of the openEO API for Argo Workflows at EURAC."
-          - op: replace
-            path: /spec/source/helm/valuesObject/global/env/daskWorkerLimit
-            value: "6"
-          - op: replace
-            path: /spec/source/helm/valuesObject/global/env/daskClusterTimeout
-            value: "3600"
-          # replicaCount = number of API server pods (Deployment replicas).
-          - op: replace
-            path: /spec/source/helm/valuesObject/replicaCount
-            value: 1
-          - op: replace
-            path: /spec/source/helm/valuesObject/resources
-            value:
-                limits:
-                    cpu: 500m
-                    memory: 512Mi
-                requests:
-                    cpu: 250m
-                    memory: 256Mi
-          - op: replace
-            path: /spec/source/helm/valuesObject/autoscaling
-            value:
-                enabled: false
+                - $values/apps/openeo-argoworkflows/values/base.yaml
+                - $values/apps/openeo-argoworkflows/values/stable.yaml
+                - $values/apps/openeo-argoworkflows/values/image-stable.yaml
 
     # Give stable a real public hostname so it doesn't collide with dev's
     # host-less rule on the shared Traefik (host rules win over host-less ones).

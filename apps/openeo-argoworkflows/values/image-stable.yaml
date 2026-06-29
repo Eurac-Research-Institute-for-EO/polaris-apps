@@ -1,0 +1,11 @@
+# STABLE openeo-argoworkflows API image.
+#
+# Image Updater is NOT yet enabled for stable (the stable node is offline and the
+# stable overlay carries no image-updater annotations). This file is read by the
+# Application via $values/apps/openeo-argoworkflows/values/image-stable.yaml so
+# the structure matches dev; add the annotations to overlays/stable when stable
+# goes live and you want auto-updates there too.
+image:
+  repository: ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-api
+  pullPolicy: Always
+  tag: "stable"
