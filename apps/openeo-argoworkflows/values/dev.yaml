@@ -13,8 +13,11 @@ global:
     apiTitle: "OpenEO ArgoWorkflows (Dev)"
     apiDescription: "Development deployment of the openEO API for Argo Workflows at EURAC."
     executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:dev"
-    # Dask sizing diverges from base for dev.
-    daskWorkerMemory: "32"
+    # Dask sizing diverges from base for dev. NOTE: the executor caps worker
+    # memory at 24 GB (WORKER_MEMORY must be <= 24) and the dev node
+    # (polaris-node1) has 12 GB, so keep this modest — 32 made every dev job
+    # fail with "WORKER_MEMORY must be <= 24.0, got 32.0".
+    daskWorkerMemory: "8"
     daskWorkerLimit: "4"
 
 # Pin the workload to the internal/dev node.
