@@ -9,9 +9,6 @@
 #    serverUrl=https://dev.openeo.eurac.edu/, stable with
 #    serverUrl=https://openeo.eurac.edu/. The per-env image tag is set in the
 #    overlays (images: transformer), not here.
-#
-# namespace is the stable default; overlays override it via the kustomize
-# `namespace:` field (dev -> openeo-dev).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
