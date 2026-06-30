@@ -1,0 +1,37 @@
+# openEO Web Editor — static nginx SPA.
+#
+#  - Listens on port 80; base path /editor (built with CLIENT_URL=/editor/).
+#  - PRIVATE GHCR package -> pulls via k3s node containerd creds. DO NOT add
+#    imagePullSecrets.
+#  - nginx OIDC-popup handling is baked into the image; nothing to configure here.
+#  - BACKEND URL IS BAKED AT BUILD TIME (config.js is imported into the JS bundle,
+#    not runtime) => the image is environment-specific. Build dev with
+#    serverUrl=https://dev.openeo.eurac.edu/, stable with
+#    serverUrl=https://openeo.eurac.edu/. The per-env image tag is set in the
+#    overlays (images: transformer), not here.
+#
+# namespace is the stable default; overlays override it via the kustomize
+# `namespace:` field (dev -> openeo-dev).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: openeo-web-editor
+    namespace: openeo
+    labels:
+        app: openeo-web-editor
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: openeo-web-editor
+    template:
+        metadata:
+            labels:
+                app: openeo-web-editor
+        spec:
+            containers:
+                - name: web-editor
+                  image: ghcr.io/eurac-research-institute-for-eo/openeo-web-editor:eurac-main
+                  imagePullPolicy: Always
+                  ports:
+                      - containerPort: 80

@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Dev openEO web editor: own namespace "web-editor-dev", served at /editor.
+# Public via the ICT reverse proxy at dev.openeo.eurac.edu (proxy terminates
+# TLS; in-cluster ingress stays plain HTTP and host-less, so it's also reachable
+# by node IP at http://<node-ip>/editor/). Mirrors openeo-argoworkflows/dev.
+#
+# The backend URL is baked into the image at build time, so the dev image must
+# be built against https://dev.openeo.eurac.edu/. Until a :dev tag is published,
+# this tracks :eurac-main (the current dev-built image) — switch newTag to "dev"
+# once CI publishes it.
+namespace: web-editor-dev
+
+resources:
+    - namespace.yaml
+    - ../../base
+
+images:
+    - name: ghcr.io/eurac-research-institute-for-eo/openeo-web-editor
+      newTag: eurac-main

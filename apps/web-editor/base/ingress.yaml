@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: openeo-web-editor
+    namespace: openeo
+    labels:
+        app: openeo-web-editor
+spec:
+    ingressClassName: traefik
+    rules:
+        # Host-less rule: matches any Host header, so the editor is reachable by
+        # node IP (http://<node-ip>/editor/). Per-environment public hostnames are
+        # added in the overlays (stable adds openeo.eurac.edu), mirroring the
+        # openeo-argoworkflows ingress.
+        - http:
+              paths:
+                  - path: /editor
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: openeo-web-editor
+                            port:
+                                number: 80

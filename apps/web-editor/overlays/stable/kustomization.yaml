@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Stable openEO web editor: own namespace "web-editor-stable", served at /editor
+# on the public host openeo.eurac.edu. Mirrors openeo-argoworkflows/stable.
+#
+# The backend URL is baked into the image at build time, so the stable image
+# must be built against https://openeo.eurac.edu/. Set newTag to "stable" once
+# CI publishes that image (the :eurac-main image is the dev build and points at
+# dev.openeo.eurac.edu — do NOT serve it from the stable host).
+namespace: web-editor-stable
+
+resources:
+    - namespace.yaml
+    - ../../base
+
+images:
+    - name: ghcr.io/eurac-research-institute-for-eo/openeo-web-editor
+      newTag: stable
+
+patches:
+    # Give stable a real public hostname so it doesn't collide with dev's
+    # host-less rule on the shared Traefik (host rules win over host-less ones).
+    # Matches the openeo-argoworkflows stable ingress host.
+    - target:
+          kind: Ingress
+          name: openeo-web-editor
+      patch: |-
+          - op: add
+            path: /spec/rules/0/host
+            value: openeo.eurac.edu

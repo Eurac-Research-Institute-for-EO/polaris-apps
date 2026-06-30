@@ -5,5 +5,7 @@ resources:
     #- hello-nginx/hello-nginx-app.yaml
     - openeo-argoworkflows/overlays/stable
     - openeo-argoworkflows/overlays/dev
+    #- web-editor/overlays/stable
+    - web-editor/overlays/dev
     - monitoring/
     - dask-gateway/
