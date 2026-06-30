@@ -14,6 +14,12 @@ spec:
         targetRevision: 2026.3.0
         helm:
             releaseName: dask-gateway
+            # Don't manage the bundled Traefik's CRDs. k3s's built-in Traefik
+            # already installs ingressroutes.traefik.io et al. (generated with a
+            # newer controller-gen), so letting this app also apply the chart's
+            # older copy makes the two ping-pong the CRD forever -> permanent
+            # OutOfSync. skipCrds leaves CRD ownership to k3s Traefik.
+            skipCrds: true
             values: |
                 # -- DEMO setup ------------------------------------------------
                 # Internal-only Dask Gateway for colleagues on the local network.
