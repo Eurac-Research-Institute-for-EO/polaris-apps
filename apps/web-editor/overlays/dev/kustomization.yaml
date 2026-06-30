@@ -1,15 +1,16 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Dev openEO web editor: own namespace "web-editor-dev", reachable at
-# http://editor.10.8.244.253.nip.io/editor/ (nip.io host on the Traefik node,
-# same pattern as grafana / hello-nginx). The /editor subpath stays even with a
-# dedicated host because the image bakes CLIENT_URL=/editor/ at build time, so
-# all assets are served under /editor/. Mirrors openeo-argoworkflows/dev.
+# Dev openEO web editor in namespace "web-editor-dev". Ingress is HOST-LESS
+# (inherited from base), so it serves /editor on any Host — primarily
+# https://dev.openeo.eurac.edu/editor (Andrea's HTTPS proxy -> .185 Traefik web),
+# which is required for OIDC: the editor must be same-origin/HTTPS as the dev
+# backend so the PKCE popup works in a secure context. The nip.io host
+# (http://dev.editor.10.8.244.253.nip.io/editor) still works too (host-less),
+# but is HTTP so login won't complete there. Mirrors openeo-argoworkflows/dev.
 #
-# The backend URL is baked into the image at build time, so the dev image is
-# built against https://dev.openeo.eurac.edu/ via the OPENEO_SERVER_URL build-arg
-# (editor CI matrix, PR #2). The :dev tag carries the dev backend.
+# The backend URL is baked into the image at build time; the :dev tag is built
+# against https://dev.openeo.eurac.edu/ via OPENEO_SERVER_URL (editor CI, PR #2).
 namespace: web-editor-dev
 
 resources:
@@ -19,14 +20,3 @@ resources:
 images:
     - name: ghcr.io/eurac-research-institute-for-eo/openeo-web-editor
       newTag: dev
-
-patches:
-    # Give dev a nip.io host on the Traefik node (10.8.244.253), matching the
-    # grafana / hello-nginx dashboard hosts. Path stays /editor (baked base path).
-    - target:
-          kind: Ingress
-          name: openeo-web-editor
-      patch: |-
-          - op: add
-            path: /spec/rules/0/host
-            value: dev.editor.10.8.244.253.nip.io
