@@ -1,0 +1,30 @@
+# ArgoCD Application for the dev openEO web editor.
+# Its own Application (instead of being rendered inline by the root app-of-apps)
+# gives it a dedicated dashboard tile and independent sync/health/history,
+# mirroring hello-nginx / dask-gateway / monitoring. The source is the kustomize
+# overlay — ArgoCD auto-detects kustomization.yaml and runs kustomize build.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: web-editor-dev
+    namespace: argocd
+    finalizers:
+        - resources-finalizer.argocd.argoproj.io
+spec:
+    project: polaris
+    source:
+        repoURL: https://github.com/Eurac-Research-Institute-for-EO/polaris-apps
+        # Same branch the rest of apps/ syncs from.
+        targetRevision: dev
+        path: apps/web-editor/overlays/dev
+    destination:
+        server: https://kubernetes.default.svc
+        # Default ns for unscoped resources; the overlay also pins each object
+        # (and the Namespace) to web-editor-dev explicitly.
+        namespace: web-editor-dev
+    syncPolicy:
+        automated:
+            prune: true
+            selfHeal: true
+        syncOptions:
+            - CreateNamespace=true

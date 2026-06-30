@@ -1,0 +1,26 @@
+# ArgoCD Application for the stable openEO web editor.
+# Enable by uncommenting the reference in ../kustomization.yaml once a
+# stable-built image (serverUrl=https://openeo.eurac.edu/) is published and the
+# overlay's images: newTag points at it. See overlays/stable/kustomization.yaml.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: web-editor-stable
+    namespace: argocd
+    finalizers:
+        - resources-finalizer.argocd.argoproj.io
+spec:
+    project: polaris
+    source:
+        repoURL: https://github.com/Eurac-Research-Institute-for-EO/polaris-apps
+        targetRevision: dev
+        path: apps/web-editor/overlays/stable
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: web-editor-stable
+    syncPolicy:
+        automated:
+            prune: true
+            selfHeal: true
+        syncOptions:
+            - CreateNamespace=true
