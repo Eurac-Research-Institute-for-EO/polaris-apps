@@ -30,4 +30,4 @@ patches:
       patch: |-
           - op: add
             path: /spec/rules/0/host
-            value: editor.10.8.244.253.nip.io
+            value: dev.editor.10.8.244.253.nip.io
