@@ -32,3 +32,11 @@ postgresql:
     existingSecret: openeo-dev-postgresql
 
 # (argo-workflows server auth-mode is in base.yaml — applies to both envs)
+
+# Gateway-less Dask: the bundled dask-gateway intermittently hangs the compute on
+# k3s (600s timeout, #140). Disabling it drops DASK_GATEWAY_SERVER so the API
+# sends a LOCAL profile and the executor runs a LocalCluster in-pod. Requires the
+# :dev executor with the LocalCluster fix (openeo-argoworkflows PR #142).
+# Dev-first; promote to base/stable after verifying.
+daskgateway:
+  enabled: false
