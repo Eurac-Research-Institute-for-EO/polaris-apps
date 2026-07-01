@@ -31,14 +31,4 @@ postgresql:
   auth:
     existingSecret: openeo-dev-postgresql
 
-# Argo Workflows server auth mode. The API fetches job logs from the Argo server
-# with its service-account token; the default 'server' mode rejects client
-# tokens (401 "token not valid for running mode"), so GET /jobs/{id}/logs returns
-# empty and the Web Editor shows no logs. 'client' lets the API's token through;
-# 'server' kept for the Argo UI / internal use. See bug #141. (Promote to
-# base/stable after verifying on dev.)
-argo-workflows:
-  server:
-    extraArgs:
-      - --auth-mode=client
-      - --auth-mode=server
+# (argo-workflows server auth-mode is in base.yaml — applies to both envs)

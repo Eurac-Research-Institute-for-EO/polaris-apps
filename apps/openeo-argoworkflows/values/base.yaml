@@ -92,3 +92,15 @@ autoscaling:
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
+# Argo Workflows server auth mode (both envs). The API fetches job logs from the
+# Argo server with its service-account token; the default 'server' mode rejects
+# client tokens (401 "token not valid for running mode") so GET /jobs/{id}/logs
+# returns empty and the Web Editor shows no logs. 'client' lets the API token
+# through (paired with pods/log on the argo-access role in the chart); 'server'
+# kept for the Argo UI. See openeo-argoworkflows#141.
+argo-workflows:
+    server:
+        extraArgs:
+            - --auth-mode=client
+            - --auth-mode=server
