@@ -31,4 +31,12 @@ postgresql:
   auth:
     existingSecret: openeo-dev-postgresql
 
-# (argo-workflows server auth-mode + gateway-less daskgateway are in base.yaml — both envs)
+# (argo-workflows server auth-mode is in base.yaml — both envs)
+
+# EXPERIMENT (#144): re-enable the bundled dask-gateway on DEV ONLY to reproduce
+# and fix the intermittent client<->scheduler hang. base.yaml keeps it false for
+# both envs; this override makes dev deploy the gateway + set DASK_GATEWAY_SERVER
+# so the API sends a gateway (distributed) profile instead of LOCAL. Revert to
+# base (remove this block) once #144 is resolved or to stop experimenting.
+daskgateway:
+  enabled: true
