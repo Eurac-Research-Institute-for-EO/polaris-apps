@@ -40,3 +40,32 @@ postgresql:
 # base (remove this block) once #144 is resolved or to stop experimenting.
 daskgateway:
   enabled: true
+
+# EXPERIMENT (#144, part 2): GDAL HTTP resilience for gateway worker pods. The
+# parallel read burst from workers collapses the (narrow, ~6MB/s) route to AWS
+# us-west-2; in-flight reads then stall forever (GDAL has no low-speed abort by
+# default) until the job hits OPENEO_COMPUTE_TIMEOUT. These vars make a stalled
+# transfer abort after 30s below 1KB/s and retry, instead of hanging the job.
+# Helm deep-merges this with the chart's extraContainerConfig.volumeMounts.
+dask-gateway:
+  gateway:
+    backend:
+      worker:
+        extraContainerConfig:
+          env:
+            - name: GDAL_HTTP_CONNECTTIMEOUT
+              value: "10"
+            - name: GDAL_HTTP_TIMEOUT
+              value: "120"
+            - name: GDAL_HTTP_LOW_SPEED_TIME
+              value: "30"
+            - name: GDAL_HTTP_LOW_SPEED_LIMIT
+              value: "1024"
+            - name: GDAL_HTTP_MAX_RETRY
+              value: "5"
+            - name: GDAL_HTTP_RETRY_DELAY
+              value: "2"
+            - name: GDAL_DISABLE_READDIR_ON_OPEN
+              value: "EMPTY_DIR"
+            - name: VSI_CACHE
+              value: "TRUE"
