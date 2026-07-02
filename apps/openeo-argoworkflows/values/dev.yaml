@@ -18,7 +18,11 @@ global:
     # (polaris-node1) has 12 GB, so keep this modest — 32 made every dev job
     # fail with "WORKER_MEMORY must be <= 24.0, got 32.0".
     daskWorkerMemory: "8"
-    daskWorkerLimit: "4"
+    # EXPERIMENT (#144, part 3): cap gateway at 1 worker. Hypothesis: the route
+    # to us-west-2 collapses when >4-ish parallel flows hit it (2 workers x 4
+    # threads = 8 flows fails; LocalCluster's 1x4 passes). 1 gateway worker
+    # reproduces the LocalCluster flow footprint on distributed plumbing.
+    daskWorkerLimit: "1"
 
 # Pin the workload to the internal/dev node.
 # Requires: kubectl label node <dev-node> polaris.eurac.edu/env=dev
