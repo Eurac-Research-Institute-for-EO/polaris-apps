@@ -23,7 +23,7 @@ global:
     # reliably failed, 1x4 reliably passes (matches LocalCluster's footprint).
     # Don't raise without re-running the #144 BDD check or fixing the upstream
     # shaper (ICT question open).
-    daskWorkerLimit: "1"
+    daskWorkerLimit: "2"
 
 # Pin the workload to the internal/dev node.
 # Requires: kubectl label node <dev-node> polaris.eurac.edu/env=dev
