@@ -104,3 +104,11 @@ argo-workflows:
         extraArgs:
             - --auth-mode=client
             - --auth-mode=server
+
+# Gateway-less Dask (both envs). The bundled dask-gateway intermittently hangs the
+# compute on k3s (600s timeout, #140). Disabling it drops DASK_GATEWAY_SERVER so the
+# API sends a LOCAL profile and the executor runs an in-pod LocalCluster
+# (processes=False, threaded). Verified on dev (job finished with a result). Needs
+# the executor with the LocalCluster fix (PRs #142/#143 → :stable/:dev).
+daskgateway:
+    enabled: false
