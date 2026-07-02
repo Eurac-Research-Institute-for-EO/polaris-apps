@@ -44,29 +44,3 @@ postgresql:
 daskgateway:
   enabled: true
 
-# GDAL HTTP resilience for gateway worker pods (#144): abort stalled transfers
-# (30s below 1KB/s) + retry, instead of hanging until OPENEO_COMPUTE_TIMEOUT.
-# Helm deep-merges this with the chart's extraContainerConfig.volumeMounts.
-# NOTE: duplicate of charts PR #10 defaults — remove this block once that merges.
-dask-gateway:
-  gateway:
-    backend:
-      worker:
-        extraContainerConfig:
-          env:
-            - name: GDAL_HTTP_CONNECTTIMEOUT
-              value: "10"
-            - name: GDAL_HTTP_TIMEOUT
-              value: "120"
-            - name: GDAL_HTTP_LOW_SPEED_TIME
-              value: "30"
-            - name: GDAL_HTTP_LOW_SPEED_LIMIT
-              value: "1024"
-            - name: GDAL_HTTP_MAX_RETRY
-              value: "5"
-            - name: GDAL_HTTP_RETRY_DELAY
-              value: "2"
-            - name: GDAL_DISABLE_READDIR_ON_OPEN
-              value: "EMPTY_DIR"
-            - name: VSI_CACHE
-              value: "TRUE"
