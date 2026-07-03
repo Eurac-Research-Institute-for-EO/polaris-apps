@@ -24,7 +24,12 @@ global:
         executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:latest"
         daskWorkerCores: "4"
         daskWorkerMemory: "8"
-        daskWorkerLimit: "6"
+        # Flow cap (#144): egress to some data hosts (AWS us-west-2) has a
+        # per-flow policer that engages probabilistically on parallel bursts.
+        # 2 workers x 4 threads is the validated envelope for both envs —
+        # don't raise without re-running the #144 BDD check or resolving the
+        # network-side policer.
+        daskWorkerLimit: "2"
         daskClusterTimeout: "3600"
 
 replicaCount: 1
@@ -105,10 +110,12 @@ argo-workflows:
             - --auth-mode=client
             - --auth-mode=server
 
-# Gateway-less Dask (both envs). The bundled dask-gateway intermittently hangs the
-# compute on k3s (600s timeout, #140). Disabling it drops DASK_GATEWAY_SERVER so the
-# API sends a LOCAL profile and the executor runs an in-pod LocalCluster
-# (processes=False, threaded). Verified on dev (job finished with a result). Needs
-# the executor with the LocalCluster fix (PRs #142/#143 → :stable/:dev).
+# Distributed Dask via the bundled dask-gateway (BOTH envs). The old "gateway
+# hangs" (#140) was really an external per-flow egress policer + missing GDAL
+# stall-abort — root-caused and fixed in #144/#147 (GDAL env is a chart worker
+# default since charts#10; executor exit/teardown fixed in #148/#149/#151).
+# Each job gets scheduler + up to daskWorkerLimit worker pods (adaptive).
+# Executor supports LOCAL fallback: set enabled: false to fall back to the
+# in-pod LocalCluster (drops DASK_GATEWAY_SERVER -> API sends LOCAL profile).
 daskgateway:
-    enabled: false
+    enabled: true

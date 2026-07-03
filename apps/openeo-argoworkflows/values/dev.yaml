@@ -38,9 +38,3 @@ postgresql:
 
 # (argo-workflows server auth-mode is in base.yaml — both envs)
 
-# dask-gateway ON for dev (#144 resolved the "hang": it was never the gateway —
-# egress route collapse + no GDAL stall-abort). Dev runs distributed Dask as the
-# proving ground; stable stays gateway-less (base.yaml) until we promote this.
-daskgateway:
-  enabled: true
-
