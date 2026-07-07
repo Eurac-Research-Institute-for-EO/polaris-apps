@@ -14,9 +14,17 @@ global:
     apiDescription: "Development deployment of the openEO API for Argo Workflows at EURAC."
     # executorImage is NOT here — it's in image-dev.yaml (loaded last) so ArgoCD
     # Image Updater can git-write-back digest bumps to it. See image-dev.yaml.
-    # Dask sizing diverges from base for dev.
-    daskWorkerMemory: "32"
-    daskWorkerLimit: "4"
+    # Dask sizing diverges from base for dev. NOTE: the executor caps worker
+    # memory at 24 GB (WORKER_MEMORY must be <= 24) and the dev node
+    # (polaris-node1) has 12 GB, so keep this modest — 32 made every dev job
+    # fail with "WORKER_MEMORY must be <= 24.0, got 32.0".
+    daskWorkerMemory: "8"
+    # Flow cap (#144, validated): egress to some data hosts (AWS us-west-2)
+    # collapses when >4-ish parallel read flows hit it — 2 workers x 4 threads
+    # reliably failed, 1x4 reliably passes (matches LocalCluster's footprint).
+    # Don't raise without re-running the #144 BDD check or fixing the upstream
+    # shaper (ICT question open).
+    daskWorkerLimit: "2"
 
 # Pin the workload to the internal/dev node.
 # Requires: kubectl label node <dev-node> polaris.eurac.edu/env=dev
@@ -28,3 +36,6 @@ nodeSelector:
 postgresql:
   auth:
     existingSecret: openeo-dev-postgresql
+
+# (argo-workflows server auth-mode is in base.yaml — both envs)
+

@@ -8,5 +8,4 @@ resources:
     #- web-editor/web-editor-stable-app.yaml
     - web-editor/web-editor-dev-app.yaml
     - monitoring/
-    - dask-gateway/
-    - headlamp/
+    # - dask-gateway/

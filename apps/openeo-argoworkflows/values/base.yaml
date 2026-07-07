@@ -24,7 +24,12 @@ global:
         executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:latest"
         daskWorkerCores: "4"
         daskWorkerMemory: "8"
-        daskWorkerLimit: "6"
+        # Flow cap (#144): egress to some data hosts (AWS us-west-2) has a
+        # per-flow policer that engages probabilistically on parallel bursts.
+        # 2 workers x 4 threads is the validated envelope for both envs —
+        # don't raise without re-running the #144 BDD check or resolving the
+        # network-side policer.
+        daskWorkerLimit: "2"
         daskClusterTimeout: "3600"
 
 replicaCount: 1
@@ -92,3 +97,25 @@ autoscaling:
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
+# Argo Workflows server auth mode (both envs). The API fetches job logs from the
+# Argo server with its service-account token; the default 'server' mode rejects
+# client tokens (401 "token not valid for running mode") so GET /jobs/{id}/logs
+# returns empty and the Web Editor shows no logs. 'client' lets the API token
+# through (paired with pods/log on the argo-access role in the chart); 'server'
+# kept for the Argo UI. See openeo-argoworkflows#141.
+argo-workflows:
+    server:
+        extraArgs:
+            - --auth-mode=client
+            - --auth-mode=server
+
+# Distributed Dask via the bundled dask-gateway (BOTH envs). The old "gateway
+# hangs" (#140) was really an external per-flow egress policer + missing GDAL
+# stall-abort — root-caused and fixed in #144/#147 (GDAL env is a chart worker
+# default since charts#10; executor exit/teardown fixed in #148/#149/#151).
+# Each job gets scheduler + up to daskWorkerLimit worker pods (adaptive).
+# Executor supports LOCAL fallback: set enabled: false to fall back to the
+# in-pod LocalCluster (drops DASK_GATEWAY_SERVER -> API sends LOCAL profile).
+daskgateway:
+    enabled: true
