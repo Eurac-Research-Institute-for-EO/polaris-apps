@@ -30,10 +30,19 @@ patches:
           - op: add
             path: /metadata/annotations
             value:
-                argocd-image-updater.argoproj.io/image-list: "api=ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-api:dev"
+                argocd-image-updater.argoproj.io/image-list: "api=ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-api:dev,executor=ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:dev"
                 argocd-image-updater.argoproj.io/api.update-strategy: "digest"
                 argocd-image-updater.argoproj.io/api.helm.image-name: "image.repository"
                 argocd-image-updater.argoproj.io/api.helm.image-tag: "image.tag"
+                # Executor: single repo:tag string in an env var, so write the whole
+                # reference via image-spec (not name/tag). force-update because the
+                # executor never runs as a container in this app's pod tree (it's
+                # launched in dynamically-created Argo workflow pods), so Image
+                # Updater can't discover a "current" image to diff — update from the
+                # configured value instead.
+                argocd-image-updater.argoproj.io/executor.update-strategy: "digest"
+                argocd-image-updater.argoproj.io/executor.helm.image-spec: "global.env.executorImage"
+                argocd-image-updater.argoproj.io/executor.force-update: "true"
                 argocd-image-updater.argoproj.io/write-back-method: "git:secret:argocd/polaris-apps-image-updater"
                 argocd-image-updater.argoproj.io/git-repository: "git@github.com:Eurac-Research-Institute-for-EO/polaris-apps.git"
                 argocd-image-updater.argoproj.io/git-branch: "dev"

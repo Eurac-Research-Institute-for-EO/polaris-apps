@@ -12,7 +12,8 @@ global:
     apiUrl: "http://10.8.244.185/openeo/1.1.0"
     apiTitle: "OpenEO ArgoWorkflows (Dev)"
     apiDescription: "Development deployment of the openEO API for Argo Workflows at EURAC."
-    executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:dev"
+    # executorImage is NOT here — it's in image-dev.yaml (loaded last) so ArgoCD
+    # Image Updater can git-write-back digest bumps to it. See image-dev.yaml.
     # Dask sizing diverges from base for dev.
     daskWorkerMemory: "32"
     daskWorkerLimit: "4"

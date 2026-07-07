@@ -84,9 +84,19 @@ to generate the key and register the deploy key. github.com host keys come from
 the `argocd-ssh-known-hosts-cm` (created by the argo-cd chart, auto-mounted by the
 Image Updater chart).
 
-## Not yet tracked
+### Executor image (also tracked)
 
-The **executor** image (`global.env.executorImage`) is still pinned manually in
-the per-env value files. It can be added to Image Updater later as a second image
-in `image-list`, but its `repo:tag` string lives in an env var (not a clean
-`image.tag` value), so it needs its own handling.
+The **executor** image (`global.env.executorImage`) is tracked as a second image
+(`executor=...:dev`) alongside the api. Two differences from the api handling:
+
+- It's a single `repo:tag` string in an env var, not a clean `image.repository` /
+  `image.tag` pair, so it uses `executor.helm.image-spec: global.env.executorImage`
+  (Image Updater writes the **whole** reference into that one key).
+- `executor.force-update: "true"` — the executor never runs as a container in this
+  Application's own pod tree (it's launched in dynamically-created Argo *workflow*
+  pods), so Image Updater can't discover a "currently running" executor image to
+  diff against; force-update makes it update from the configured value instead.
+
+Its reference lives in `image-dev.yaml` (moved out of `dev.yaml`) because
+`write-back-target` targets a single file per Application — the same file the api
+tag is written to. After the first bump it becomes `...executor:dev@sha256:<digest>`.

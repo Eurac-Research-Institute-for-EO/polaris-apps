@@ -1,15 +1,25 @@
-# DEV openeo-argoworkflows API image. Image-Updater-owned: it git-writes the
-# image.tag below (to the polaris-apps `dev` branch) when a new image is pushed.
+# DEV openeo-argoworkflows images (API + executor). Image-Updater-owned: it
+# git-writes the image references below (to the polaris-apps `dev` branch) when a
+# new image is pushed to the mutable :dev tag.
 #
-# The dev overlay uses the `digest` update-strategy on the mutable :dev tag, so
-# image.tag becomes `dev@sha256:<digest>` after the first update — the chart
-# renders `repository:dev@sha256:<digest>`, a valid digest-pinned reference. Each
-# new push to :dev produces a new digest -> a new commit here -> a re-sync.
+# The dev overlay uses the `digest` update-strategy on the mutable :dev tag, so:
+#   - image.tag becomes `dev@sha256:<digest>` (chart renders
+#     `repository:dev@sha256:<digest>`, a digest-pinned reference), and
+#   - global.env.executorImage becomes `...executor:dev@sha256:<digest>` (written
+#     via helm.image-spec since it's a single repo:tag string, not a name/tag pair).
+# Each new push to :dev produces a new digest -> a new commit here -> a re-sync.
+#
+# executorImage lives here (not in dev.yaml) because Image Updater's write-back
+# targets a single file per Application; this is that file. It deep-merges over
+# base.yaml/dev.yaml (loaded last, so it wins).
 #
 # To revert a bad bump: `git revert` the `argocd-image-updater` commit that
-# touched this file, or edit image.tag back to a previous `dev@sha256:...` (or
+# touched this file, or edit the reference back to a previous `dev@sha256:...` (or
 # plain `dev`) and push.
 image:
   repository: ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-api
   pullPolicy: Always
   tag: "dev"
+global:
+  env:
+    executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:dev"
