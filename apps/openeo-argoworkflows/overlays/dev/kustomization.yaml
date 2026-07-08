@@ -13,6 +13,9 @@ kind: Kustomization
 resources:
     - namespace.yaml
     - ../../base
+    # ArgoCD Image Updater config (dev only). v1.2.2 reconciles this ImageUpdater
+    # CR, not Application annotations — see imageupdater.yaml.
+    - imageupdater.yaml
 
 patches:
     - target:
