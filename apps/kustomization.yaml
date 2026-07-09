@@ -9,4 +9,5 @@ resources:
     - web-editor/web-editor-dev-app.yaml
     - monitoring/
     - stac-browser/
+    - stac-fastapi-pgstac/
     # - dask-gateway/

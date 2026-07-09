@@ -1,0 +1,75 @@
+# stac-fastapi-pgstac — FastAPI STAC API + bundled pgstac PostgreSQL.
+#
+#  - Deployed from our fork's Helm chart (chart/ dir on the helm-chart branch of
+#    Eurac-Research-Institute-for-EO/stac-fastapi-pgstac), rendered by ArgoCD's
+#    native Helm support with the inline values below.
+#  - API image: PRIVATE GHCR package ghcr.io/eurac-research-institute-for-eo/
+#    stac-fastapi-pgstac:eurac -> pulls via k3s node containerd creds. DO NOT add
+#    imagePullSecrets (same convention as web-editor / stac-browser).
+#  - DB: bundled pgstac StatefulSet using the upstream public image
+#    ghcr.io/stac-utils/pgstac:v0.9.8 (schema auto-installed on first init).
+#  - Credentials are DEMO plaintext: this API is internal-only. Move to an
+#    existingSecret before any external exposure.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: stac-fastapi-pgstac
+    namespace: argocd
+    finalizers:
+        - resources-finalizer.argocd.argoproj.io
+spec:
+    project: polaris
+    source:
+        repoURL: https://github.com/Eurac-Research-Institute-for-EO/stac-fastapi-pgstac
+        targetRevision: helm-chart
+        path: chart
+        helm:
+            releaseName: stac-fastapi-pgstac
+            values: |
+                # -- Database credentials (DEMO, internal-only) ----------------
+                auth:
+                  username: username
+                  password: password
+                  database: postgis
+
+                # -- STAC API (our fork's image) -------------------------------
+                api:
+                  image:
+                    repository: ghcr.io/eurac-research-institute-for-eo/stac-fastapi-pgstac
+                    tag: eurac
+
+                # -- Bundled pgstac database (upstream public image) -----------
+                postgres:
+                  enabled: true
+                  image:
+                    repository: ghcr.io/stac-utils/pgstac
+                    tag: v0.9.8
+                  persistence:
+                    enabled: true
+                    size: 10Gi
+
+                ingress:
+                  enabled: true
+                  className: traefik
+                  annotations:
+                    traefik.ingress.kubernetes.io/router.entrypoints: web
+                  hosts:
+                    - host: stac.10.8.244.253.nip.io
+                      paths:
+                        - path: /
+                          pathType: Prefix
+
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: stac-fastapi-pgstac
+
+    syncPolicy:
+        automated:
+            prune: true
+            selfHeal: true
+            allowEmpty: false
+        syncOptions:
+            - Validate=true
+            - CreateNamespace=true
+            - PrunePropagationPolicy=foreground
+            - PruneLast=true
