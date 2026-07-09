@@ -1,0 +1,63 @@
+# STAC Browser — static Vue SPA (nginx) for browsing the EURAC STAC catalog.
+#
+#  - Deployed from our fork's Helm chart (chart/ dir on the helm-chart branch of
+#    Eurac-Research-Institute-for-EO/stac-browser), rendered by ArgoCD's native
+#    Helm support with the inline values below.
+#  - Image: PRIVATE GHCR package ghcr.io/eurac-research-institute-for-eo/
+#    stac-browser:eurac -> pulls via k3s node containerd creds. DO NOT add
+#    imagePullSecrets (same convention as web-editor).
+#  - catalogUrl is a RUNTIME option (entrypoint writes runtime-config.js at
+#    container start), so no image rebuild is needed to point at a new catalog.
+#  - Served at the domain root (pathPrefix "/"), so the stock image works as-is.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: stac-browser
+    namespace: argocd
+    finalizers:
+        - resources-finalizer.argocd.argoproj.io
+spec:
+    project: polaris
+    source:
+        repoURL: https://github.com/Eurac-Research-Institute-for-EO/stac-browser
+        targetRevision: helm-chart
+        path: chart
+        helm:
+            releaseName: stac-browser
+            values: |
+                image:
+                  repository: ghcr.io/eurac-research-institute-for-eo/stac-browser
+                  tag: eurac
+
+                # STAC Browser runtime config (SB_* env -> runtime-config.js).
+                config:
+                  catalogUrl: "https://stac.eurac.edu/"
+                  catalogTitle: "EURAC STAC Browser"
+                  # Set to "false" to restrict browsing to catalogUrl only.
+                  # allowExternalAccess: "true"
+
+                ingress:
+                  enabled: true
+                  className: traefik
+                  annotations:
+                    traefik.ingress.kubernetes.io/router.entrypoints: web
+                  hosts:
+                    - host: browser.10.8.244.253.nip.io
+                      paths:
+                        - path: /
+                          pathType: Prefix
+
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: stac-browser
+
+    syncPolicy:
+        automated:
+            prune: true
+            selfHeal: true
+            allowEmpty: false
+        syncOptions:
+            - Validate=true
+            - CreateNamespace=true
+            - PrunePropagationPolicy=foreground
+            - PruneLast=true
