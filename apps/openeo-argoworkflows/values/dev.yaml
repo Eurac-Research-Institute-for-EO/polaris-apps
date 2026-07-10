@@ -37,5 +37,11 @@ postgresql:
   auth:
     existingSecret: openeo-dev-postgresql
 
+# Disable the bundled dask-gateway for dev — Traefik routing for scheduler/worker
+# pods is unreliable on k3s, causing workers to fail with "scheduler-connection-lost".
+# Falls back to in-pod LocalCluster (LOCAL dask profile), which is stable.
+daskgateway:
+  enabled: false
+
 # (argo-workflows server auth-mode is in base.yaml — both envs)
 
