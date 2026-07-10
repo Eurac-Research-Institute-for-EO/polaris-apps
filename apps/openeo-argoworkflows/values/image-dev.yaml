@@ -22,4 +22,4 @@ image:
   tag: "dev@sha256:16579784efe38e8a5eec4fb0bb985296e32ecc602b4bef1d7d911cf04f090cdb"
 global:
   env:
-    executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:dev@sha256:ee403456e92230983bf79ad930c90fb0c03929565cde3ca0524fa9eb6e4b0c9d"
+    executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:dev@sha256:f5e68a1969135f5cae77734fc31670b4eea00cdd8bd0b3f946d0800c0628d6ff"
