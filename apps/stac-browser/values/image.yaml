@@ -18,4 +18,4 @@
 image:
   repository: ghcr.io/eurac-research-institute-for-eo/stac-browser
   pullPolicy: Always
-  tag: "eurac"
+  tag: "eurac@sha256:1d7102cf88b6a628845bd73be97ec14f348afe9ada717ae214d816edaa058e9f"
