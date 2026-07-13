@@ -3,3 +3,6 @@ kind: Kustomization
 
 resources:
     - stac-browser-app.yaml
+    # ArgoCD Image Updater config — tracks the :eurac tag and git-writes bumps
+    # into values/image.yaml. See imageupdater.yaml.
+    - imageupdater.yaml

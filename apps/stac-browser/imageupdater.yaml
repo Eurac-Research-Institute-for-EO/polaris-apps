@@ -1,0 +1,40 @@
+# ArgoCD Image Updater config for stac-browser.
+#
+# Image Updater v1.2.2 (chart 1.2.4) is a controller-runtime controller that ONLY
+# reconciles `ImageUpdater` custom resources — it no longer reads the old
+# `argocd-image-updater.argoproj.io/*` annotations on the Application. So tracking
+# is expressed here, as a CR (the openeo app carries both; only the CR is live).
+#
+# It targets the stac-browser Application by name and git-writes the new image
+# reference into values/image.yaml on the polaris-apps `dev` branch — ArgoCD then
+# re-syncs. Write-back to git (not a live patch) is deliberate: the app-of-apps
+# runs selfHeal, so git must be the source of truth or the parent would revert a
+# live patch as drift.
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+    name: stac-browser
+    namespace: argocd
+spec:
+    applicationRefs:
+        - namePattern: stac-browser
+          images:
+              # `digest` tracks the mutable :eurac tag and fires on every new push
+              # to it, writing image.tag as eurac@sha256:<digest>. Switch to
+              # `semver` once the fork's CI publishes vX.Y.Z tags.
+              - alias: stac-browser
+                imageName: ghcr.io/eurac-research-institute-for-eo/stac-browser:eurac
+                commonUpdateSettings:
+                    updateStrategy: digest
+                manifestTargets:
+                    helm:
+                        name: image.repository
+                        tag: image.tag
+    # git write-back over the SSH deploy key in Secret argocd/polaris-apps-image-updater
+    # (created by multinode/tasks/master/secrets.yaml from image_updater_git_ssh_key).
+    writeBackConfig:
+        method: "git:secret:argocd/polaris-apps-image-updater"
+        gitConfig:
+            repository: "git@github.com:Eurac-Research-Institute-for-EO/polaris-apps.git"
+            branch: dev
+            writeBackTarget: "helmvalues:/apps/stac-browser/values/image.yaml"

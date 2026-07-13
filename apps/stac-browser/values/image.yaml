@@ -1,0 +1,21 @@
+# STAC Browser image — Image-Updater-owned. It git-writes the tag below (to the
+# polaris-apps `dev` branch) whenever a new image is pushed to the mutable
+# :eurac tag.
+#
+# This file is kept SEPARATE from the Application's inline helm `values:` because
+# inline values outrank valueFiles in Helm precedence and would shadow whatever
+# Image Updater writes here. The Application pulls it in through a multi-source
+# $values ref: $values/apps/stac-browser/values/image.yaml.
+#
+# The `digest` update-strategy tracks the mutable :eurac tag, so `tag` becomes
+# `eurac@sha256:<digest>` (the chart renders `repository:eurac@sha256:<digest>`,
+# a digest-pinned reference). Each new push to :eurac produces a new digest -> a
+# new commit here -> a re-sync.
+#
+# To revert a bad bump: `git revert` the `argocd-image-updater` commit that
+# touched this file, or edit the tag back to a previous `eurac@sha256:...` (or
+# plain `eurac`) and push.
+image:
+  repository: ghcr.io/eurac-research-institute-for-eo/stac-browser
+  pullPolicy: Always
+  tag: "eurac"
