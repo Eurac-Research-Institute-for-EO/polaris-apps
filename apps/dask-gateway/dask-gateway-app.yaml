@@ -24,30 +24,11 @@ spec:
                 # -- DEMO setup ------------------------------------------------
                 # Internal-only Dask Gateway for colleagues on the local network.
                 # No access control (intentional - see gateway.auth below).
-                #
-                # Exposure: NodePort, so it works TODAY without MetalLB / a free
-                # LAN IP / IT involvement. Dask multiplexes the HTTP API AND the
-                # raw scheduler/compute traffic over a SINGLE port, and NodePort
-                # is plain L4 forwarding, so one nodePort carries everything.
-                #
                 # Connect from a client:
                 #   from dask_gateway import Gateway
                 #   g = Gateway("http://10.8.244.185:30080")
                 #   cluster = g.new_cluster(); cluster.scale(2)
                 #   client = cluster.get_client()
-                #
-                # Placement: all pods (gateway, traefik, controller AND the
-                # dynamically created scheduler/worker pods) are pinned to the
-                # dev node 10.8.244.185 via nodeSelector polaris.eurac.edu/env=dev
-                # - the same node/label the openeo-dev workloads use, chosen here
-                # because it has more resources. Requires the node be labelled:
-                #   kubectl label node <dev-node> polaris.eurac.edu/env=dev
-                #
-                # UPGRADE PATH (when IT is back -> proper LoadBalancer setup):
-                #   1. Deploy MetalLB (L2) with a reserved LAN IP pool.
-                #   2. Change traefik.service.type below to LoadBalancer and drop
-                #      the nodePort line; the gateway then gets a dedicated IP.
-                # --------------------------------------------------------------
 
                 gateway:
                   # No access control: simple auth with an empty password accepts
@@ -58,9 +39,16 @@ spec:
                     simple:
                       password:
 
-                  # Pin the API server pod to the dev node.
-                  nodeSelector:
-                    polaris.eurac.edu/env: dev
+                  # Any compute node, never the control plane. Anchored here and
+                  # reused by the controller, traefik and the dynamically created
+                  # scheduler/worker pods below, so the rule is defined once.
+                  affinity: &computeNodes
+                    nodeAffinity:
+                      requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                          - matchExpressions:
+                              - key: node-role.kubernetes.io/control-plane
+                                operator: DoesNotExist
 
                   backend:
                     # The scheduler/worker pods are created dynamically by the
@@ -68,12 +56,26 @@ spec:
                     # (a partial pod spec) rather than a plain nodeSelector key.
                     scheduler:
                       extraPodConfig:
-                        nodeSelector:
-                          polaris.eurac.edu/env: dev
+                        affinity: *computeNodes
                     worker:
                       extraPodConfig:
-                        nodeSelector:
-                          polaris.eurac.edu/env: dev
+                        affinity: *computeNodes
+                        # Spread workers across nodes instead of packing them
+                        # onto whichever node the scheduler likes first.
+                        #
+                        # whenUnsatisfiable MUST stay ScheduleAnyway. With
+                        # DoNotSchedule this becomes a hard cap: once the skew
+                        # limit is hit, further workers sit Pending forever and
+                        # adaptive scaling silently stops working — which looks
+                        # exactly like a broken controller. Soft spreading gets
+                        # the balance without ever blocking a scale-up.
+                        topologySpreadConstraints:
+                          - maxSkew: 1
+                            topologyKey: kubernetes.io/hostname
+                            whenUnsatisfiable: ScheduleAnyway
+                            labelSelector:
+                              matchLabels:
+                                app.kubernetes.io/component: dask-worker
 
                   # extraConfig is a top-level gateway key (sibling of auth/backend),
                   # not nested under backend.
@@ -91,18 +93,66 @@ spec:
                           }
 
                       c.Backend.cluster_options = Options(
-                          Integer("worker_cores", 4, min=1, max=8, label="Worker Cores"),
-                          Float("worker_memory", 4, min=1, max=16, label="Worker Memory (GiB)"),
+                          # Max 8 cores = a quarter of one node. A worker must fit
+                          # entirely on a single node, so this is also the largest
+                          # single unit of work the cluster can ever place.
+                          Integer("worker_cores", 2, min=1, max=8, label="Worker Cores"),
+                          Float("worker_memory", 16, min=1, max=64, label="Worker Memory (GiB)"),
                           String("image", default="ghcr.io/dask/dask-gateway:2026.3.0", label="Image"),
                           handler=option_handler,
                       )
+
+                      # CAPS. Without these, one `cluster.scale(500)` from anyone
+                      # on the LAN takes both compute nodes, including the one
+                      # running openeo STABLE. There is no authentication here
+                      # (see gateway.auth), so this is the only thing standing
+                      # between a mistyped number and everyone else's jobs.
+                      #
+                      # These do NOT stop a node dying — Kubernetes already does
+                      # that. dask-gateway sets memory requests == limits, so a
+                      # worker that overruns is OOMKilled on its own rather than
+                      # taking the kubelet with it, and work that cannot be placed
+                      # sits Pending rather than evicting openeo. What these caps
+                      # prevent is MONOPOLISATION.
+                      #
+                      # ~37% of the pool per cluster, so two people can work at
+                      # once and still leave ~14 cores / ~115 GiB for openeo. A
+                      # third concurrent full-size cluster is not rejected — its
+                      # pods just stay Pending until capacity frees up.
+                      #
+                      # 24 cores x 8 GiB/core = 192 GiB keeps the cluster cap on
+                      # the same ratio as the workers. Note the scheduler pod
+                      # counts against these: max workers is computed as
+                      # (cluster_max_cores - scheduler_cores) // worker_cores.
+                      #
+                      # LIMITATION: per-cluster is the ONLY granularity this
+                      # version offers. `UserLimits` existed in dask-gateway
+                      # 0.9.x but is gone in 2026.3.0, and the upstream docs
+                      # (gateway.dask.org/resource-limits.html) list only these
+                      # three. So one person opening three clusters can still
+                      # oversubscribe the pool; idle_timeout below is the
+                      # backstop, not a real per-user quota.
+                      c.ClusterConfig.cluster_max_cores = 24
+                      c.ClusterConfig.cluster_max_memory = "192 G"
+                      c.ClusterConfig.cluster_max_workers = 24
+
+                      # Reclaim abandoned clusters. The default is 0 = never, so
+                      # a colleague who closes their laptop without calling
+                      # shutdown() holds their cores until someone notices by
+                      # hand. This is the most likely way the pool silently fills
+                      # up. An hour is long enough to survive a coffee break; a
+                      # cluster actively running a graph is not idle and is never
+                      # touched by this.
+                      c.ClusterConfig.idle_timeout = 3600
 
                 # The chart's bundled Traefik is the proxy clients connect to. It
                 # demultiplexes the HTTP API from the TLS scheduler stream itself,
                 # so we only need to expose its single web port.
                 traefik:
-                  nodeSelector:
-                    polaris.eurac.edu/env: dev
+                  # Free to run on either compute node: a NodePort is opened on
+                  # EVERY node and kube-proxy forwards to wherever the pod lives,
+                  # so clients keep using the same host:port regardless.
+                  affinity: *computeNodes
                   service:
                     type: NodePort
                     ports:
@@ -114,8 +164,7 @@ spec:
                         port: web
 
                 controller:
-                  nodeSelector:
-                    polaris.eurac.edu/env: dev
+                  affinity: *computeNodes
 
     destination:
         server: https://kubernetes.default.svc
