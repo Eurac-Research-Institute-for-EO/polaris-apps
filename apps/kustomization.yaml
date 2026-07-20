@@ -10,4 +10,4 @@ resources:
     - monitoring/
     - stac-browser/
     - stac-fastapi-pgstac/
-    # - dask-gateway/
+    - dask-gateway/
