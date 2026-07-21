@@ -37,6 +37,23 @@ spec:
                   image:
                     repository: ghcr.io/eurac-research-institute-for-eo/stac-fastapi-pgstac
                     tag: eurac
+                  settings:
+                    # Enables Transactions + BulkTransactions: POST/PUT/DELETE
+                    # on /collections and /collections/{id}/items.
+                    enableTransactionsExtensions: true
+                  # NOTE: this list REPLACES the chart default, so the GDAL
+                  # entries below must be kept in sync with chart/values.yaml.
+                  extraEnv:
+                    # Browser-side writes need more than the default
+                    # GET,POST,OPTIONS.
+                    - name: CORS_METHODS
+                      value: "GET,POST,PUT,DELETE,OPTIONS"
+                    - name: VSI_CACHE
+                      value: "TRUE"
+                    - name: GDAL_HTTP_MERGE_CONSECUTIVE_RANGES
+                      value: "YES"
+                    - name: GDAL_DISABLE_READDIR_ON_OPEN
+                      value: "EMPTY_DIR"
 
                 # -- Bundled pgstac database (upstream public image) -----------
                 postgres:
