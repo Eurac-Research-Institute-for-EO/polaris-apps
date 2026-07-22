@@ -1,0 +1,73 @@
+# Pre-pulls the default Dask worker image onto every compute node, so the first
+# researcher of the day doesn't sit through a ~1.7 GB pull while their cluster
+# creation ticks towards the 600s start timeout. Once a node has the image
+# cached, workers start in seconds.
+#
+# The pod does nothing at runtime. The real work is the initContainer: kubelet
+# must pull the image to run it, which is the whole point, and `/bin/true` exits
+# immediately. The main container is then `pause` — ~700 KB, sleeps forever —
+# purely so the DaemonSet pod stays Running and the node keeps the image.
+#
+# IMPORTANT: the image tag below must match the `image` cluster option default in
+# dask-gateway-app.yaml. If they drift, this pre-pulls an image nobody uses and
+# the wait comes back. Change both together.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+    name: dask-image-prepull
+    namespace: dask-gateway
+    labels:
+        app.kubernetes.io/name: dask-image-prepull
+        app.kubernetes.io/part-of: dask-gateway
+spec:
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: dask-image-prepull
+    # Don't stampede: pull on one node at a time rather than saturating the
+    # uplink from every node at once on a tag change.
+    updateStrategy:
+        type: RollingUpdate
+        rollingUpdate:
+            maxUnavailable: 1
+    template:
+        metadata:
+            labels:
+                app.kubernetes.io/name: dask-image-prepull
+        spec:
+            # Same rule as the gateway's own pods: compute nodes only. Pulling
+            # onto the control plane would waste disk on a node that never runs
+            # a worker.
+            affinity:
+                nodeAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                            - matchExpressions:
+                                  - key: node-role.kubernetes.io/control-plane
+                                    operator: DoesNotExist
+            # Deliberately NO priorityClassName. This is background housekeeping
+            # and must never preempt a dask worker or an openeo pod — which is
+            # exactly what a `system-node-critical` here would let it do. Default
+            # priority (0) plus the near-zero requests below keeps it harmless.
+            terminationGracePeriodSeconds: 1
+            automountServiceAccountToken: false
+            initContainers:
+                - name: pull
+                  image: pangeo/pangeo-notebook:04bb14b
+                  imagePullPolicy: IfNotPresent
+                  command: ["/bin/true"]
+                  resources:
+                      requests:
+                          cpu: 10m
+                          memory: 16Mi
+                      limits:
+                          memory: 64Mi
+            containers:
+                - name: pause
+                  image: registry.k8s.io/pause:3.9
+                  imagePullPolicy: IfNotPresent
+                  resources:
+                      requests:
+                          cpu: 1m
+                          memory: 8Mi
+                      limits:
+                          memory: 16Mi
