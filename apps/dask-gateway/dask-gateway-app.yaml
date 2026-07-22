@@ -125,9 +125,35 @@ spec:
                           # single unit of work the cluster can ever place.
                           Integer("worker_cores", 2, min=1, max=8, label="Worker Cores"),
                           Float("worker_memory", 16, min=1, max=64, label="Worker Memory (GiB)"),
-                          String("image", default="ghcr.io/dask/dask-gateway:2026.3.0", label="Image"),
+                          # Pangeo's notebook image, so workers have the geospatial
+                          # stack (xarray, rasterio, rioxarray, geopandas, zarr,
+                          # s3fs) at runtime. The stock dask-gateway image has
+                          # none of it, which makes it useless for EO work.
+                          #
+                          # PINNED TO A BUILD, NOT A DATE TAG, ON PURPOSE. The
+                          # dated tags and :latest lag behind: 2026.06.04 still
+                          # ships dask 2026.1.1 / dask-gateway 2025.4.0. This
+                          # build (2026-06-05) is the first with dask, distributed
+                          # AND dask-gateway all at 2026.3.0 — an exact match for
+                          # the gateway server, so users pinning 2026.3.0 locally
+                          # get a clean three-way version match. Verify any
+                          # replacement against pangeo-docker-images'
+                          # pangeo-notebook/packages.txt at that commit before
+                          # bumping; do NOT use :master, it is mutable.
+                          String("image", default="pangeo/pangeo-notebook:04bb14b", label="Image"),
                           handler=option_handler,
                       )
+
+                      # The pangeo image is ~1.7 GB compressed. The FIRST cluster
+                      # on a node has to pull it, which takes well over the 60s
+                      # default for both of these — cluster creation would fail
+                      # with a timeout that looks like a broken gateway. Later
+                      # starts hit the node's image cache and take seconds.
+                      #
+                      # Defined on DBBackendBase; `c.Backend.` reaches it because
+                      # traitlets applies a parent class's config to subclasses.
+                      c.Backend.cluster_start_timeout = 600
+                      c.Backend.worker_start_timeout = 600
 
                       # CAPS. Without these, one `cluster.scale(500)` from anyone
                       # on the LAN takes both compute nodes, including the one
