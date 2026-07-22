@@ -54,12 +54,37 @@ spec:
                     # The scheduler/worker pods are created dynamically by the
                     # controller, so their placement is set via extraPodConfig
                     # (a partial pod spec) rather than a plain nodeSelector key.
+                    # extraContainerConfig is the matching partial *container*
                     scheduler:
                       extraPodConfig:
                         affinity: *computeNodes
+                        volumes: &cephVolumes
+                          - name: ceph-projects
+                            hostPath:
+                              path: /mnt/CEPH_PROJECTS
+                              type: Directory
+                          - name: ceph-basedata
+                            hostPath:
+                              path: /mnt/CEPH_BASEDATA
+                              type: Directory
+                          - name: ceph-products
+                            hostPath:
+                              path: /mnt/CEPH_PRODUCTS
+                              type: Directory
+                      extraContainerConfig:
+                        volumeMounts: &cephVolumeMounts
+                          - name: ceph-projects
+                            mountPath: /mnt/CEPH_PROJECTS
+                          - name: ceph-basedata
+                            mountPath: /mnt/CEPH_BASEDATA
+                            readOnly: true
+                          - name: ceph-products
+                            mountPath: /mnt/CEPH_PRODUCTS
+                            readOnly: true
                     worker:
                       extraPodConfig:
                         affinity: *computeNodes
+                        volumes: *cephVolumes
                         # Spread workers across nodes instead of packing them
                         # onto whichever node the scheduler likes first.
                         #
@@ -76,6 +101,8 @@ spec:
                             labelSelector:
                               matchLabels:
                                 app.kubernetes.io/component: dask-worker
+                      extraContainerConfig:
+                        volumeMounts: *cephVolumeMounts
 
                   # extraConfig is a top-level gateway key (sibling of auth/backend),
                   # not nested under backend.
