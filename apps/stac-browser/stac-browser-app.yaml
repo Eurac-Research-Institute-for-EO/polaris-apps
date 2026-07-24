@@ -41,7 +41,7 @@ spec:
                   catalogUrl: "https://stac.eurac.edu/"
                   catalogTitle: "EURAC STAC Browser"
                   # Set to "false" to restrict browsing to catalogUrl only.
-                  # allowExternalAccess: "true"
+                  allowExternalAccess: "true"
 
                 ingress:
                   enabled: true
