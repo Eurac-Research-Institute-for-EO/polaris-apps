@@ -29,7 +29,7 @@ spec:
     # Everything else (runtime config, ingress) has no reason to move out.
     sources:
         - repoURL: https://github.com/Eurac-Research-Institute-for-EO/stac-browser
-          targetRevision: helm-chart
+          targetRevision: manager
           path: chart
           helm:
             releaseName: stac-browser
@@ -37,11 +37,32 @@ spec:
                 - $values/apps/stac-browser/values/image.yaml
             values: |
                 # STAC Browser runtime config (SB_* env -> runtime-config.js).
+                #
+                # NOTE: `allowExternalAccess` does NOT give users a catalog
+                # picker. As long as `catalogUrl` is set, the browser boots
+                # directly into (and stays locked to) that single catalog;
+                # allowExternalAccess only lets it follow links to STAC data that
+                # is not a child of catalogUrl. To let users enter any catalog
+                # URL / pick one from stacindex.org, `catalogUrl` must be null or
+                # removed (a null override drops the key from the merged Helm
+                # values, so no SB_catalogUrl env is emitted and the app falls
+                # back to its built-in null default = landing screen).
                 config:
                   catalogUrl: "https://stac.eurac.edu/"
                   catalogTitle: "EURAC STAC Browser"
                   # Set to "false" to restrict browsing to catalogUrl only.
                   allowExternalAccess: "true"
+                  # Management UI ("Manage" button next to Source/Share) via the
+                  # STAC API Transactions extension. `transactions` is on by
+                  # default; the button only appears once the STAC API at
+                  # catalogUrl actually advertises transaction support AND (by
+                  # default) the user is logged in. To trial it without those,
+                  # flip the two flags below to "false" — but that lets anyone
+                  # attempt writes, and it only works if the API allows it too,
+                  # so keep them "true" against a real backend.
+                  transactions: "true"
+                  # transactionsRequireLogin: "false"
+                  # transactionsRequirePreflight: "false"
 
                 ingress:
                   enabled: true
