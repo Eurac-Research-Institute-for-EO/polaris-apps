@@ -48,7 +48,11 @@ spec:
                 # values, so no SB_catalogUrl env is emitted and the app falls
                 # back to its built-in null default = landing screen).
                 config:
-                  catalogUrl: "https://stac.eurac.edu/"
+                  # catalogUrl intentionally null: boots to the landing screen so
+                  # any STAC catalog/API URL can be entered (e.g. the pgstac at
+                  # http://stac.10.8.244.253.nip.io/). Set it back to a URL to lock
+                  # the browser to a single catalog again.
+                  catalogUrl: null
                   catalogTitle: "EURAC STAC Browser"
                   # Set to "false" to restrict browsing to catalogUrl only.
                   allowExternalAccess: "true"
