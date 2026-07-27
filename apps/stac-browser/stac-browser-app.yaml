@@ -48,25 +48,19 @@ spec:
                 # values, so no SB_catalogUrl env is emitted and the app falls
                 # back to its built-in null default = landing screen).
                 config:
-                  # catalogUrl intentionally null: boots to the landing screen so
-                  # any STAC catalog/API URL can be entered (e.g. the pgstac at
-                  # http://stac.10.8.244.253.nip.io/). Set it back to a URL to lock
-                  # the browser to a single catalog again.
-                  catalogUrl: null
-                  catalogTitle: "EURAC STAC Browser"
-                  # Set to "false" to restrict browsing to catalogUrl only.
+                  # Playground: browser is locked to the managed pgstac API so we
+                  # can freely create/edit/delete via the Manage UI. Set this to
+                  # null for the landing screen, or another URL to point elsewhere.
+                  catalogUrl: "http://stac.10.8.244.253.nip.io/"
+                  catalogTitle: "EURAC STAC (pgstac playground)"
                   allowExternalAccess: "true"
-                  # Management UI ("Manage" button next to Source/Share) via the
-                  # STAC API Transactions extension. `transactions` is on by
-                  # default; the button only appears once the STAC API at
-                  # catalogUrl actually advertises transaction support AND (by
-                  # default) the user is logged in. To trial it without those,
-                  # flip the two flags below to "false" — but that lets anyone
-                  # attempt writes, and it only works if the API allows it too,
-                  # so keep them "true" against a real backend.
+                  # Management UI ("Manage" button next to Source/Share). Login and
+                  # preflight checks are disabled so create/edit/delete show up
+                  # without OIDC or an OPTIONS `Allow` header — fine for this
+                  # throwaway playground, NOT appropriate for a real catalog.
                   transactions: "true"
-                  # transactionsRequireLogin: "false"
-                  # transactionsRequirePreflight: "false"
+                  transactionsRequireLogin: "false"
+                  transactionsRequirePreflight: "false"
 
                 ingress:
                   enabled: true
