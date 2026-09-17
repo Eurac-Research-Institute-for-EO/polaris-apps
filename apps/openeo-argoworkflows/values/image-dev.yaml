@@ -19,7 +19,7 @@
 image:
   repository: ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-api
   pullPolicy: Always
-  tag: "08ef525@sha256:9c44f97462bffa53f65edad4119c84365cb6836243eb1910a552afd0731e8b5d"
+  tag: "dev@sha256:de3a8db15c055c6ef90167453c7b6e909656d875da877825fd7fe64f9fb3a822"
 global:
   env:
-    executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:08ef525@sha256:4c99797b1db7ae917e01af7c8e32831afe94f753b3b02fca2418bb45d8c37cc8"
+    executorImage: "ghcr.io/eurac-research-institute-for-eo/openeo-argoworkflows-executor:dev@sha256:310f977c6b743a3b1809ecb768fdae214b4b0b836bb4c8df687a26ebfc6aa9f2"
