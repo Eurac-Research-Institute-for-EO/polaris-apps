@@ -5,7 +5,7 @@ resources:
     #- hello-nginx/hello-nginx-app.yaml
     - openeo-argoworkflows/overlays/stable
     - openeo-argoworkflows/overlays/dev
-    #- web-editor/web-editor-stable-app.yaml
+    - web-editor/web-editor-stable-app.yaml
     - web-editor/web-editor-dev-app.yaml
     - monitoring/
     - stac-browser/
